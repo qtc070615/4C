@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>省份大厅</title>
+    <script src="https://cdn.jsdelivr.net/npm/echarts@6.0.0/dist/echarts.min.js"></script>
+    <link rel="stylesheet" href="../css/profile.css">
+</head>
+<body>
+
+    <button class="mobile-toggle" id="mobileToggle">▶</button>
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <h2 class="sidebar-title" id="provinceName">加载中...</h2>
+        </div>
+        <ul class="building-list">
+            <li class="building-item">
+                <a href="./profile.html" class="building-link hall-link" id="hallLink">大厅</a>
+            </li>
+            <div id="buildingListContainer"></div>
+        </ul>
+    </aside>
+
+    <main class="main-content" id="mainContent">
+        <div class="particle-layer" id="particleLayer"></div>
+
+        <div class="compact-nav" id="compactNav">
+            <a href="../../main/China/html/main.html" class="back-btn">← 返回全国地图</a>
+            <div class="nav-title" id="navProvinceName">省份</div>
+            <div class="nav-count" id="navBuildingCount">现存 0 处</div>
+        </div>
+
+        <div class="top-bar">
+            <a href="../../main/China/html/main.html" class="back-btn">← 返回全国地图</a>
+            <div class="meta-info">现存 <span id="buildingNum">0</span> 处</div>
+        </div>
+
+        <div class="content-area">
+            <div class="page-title">
+                <h1 id="pageTitle">省份</h1>
+                <p id="pageEnName">Province</p>
+            </div>
+
+            <div class="box">
+                <div class="box-header">
+                    <div class="box-title">省情概述</div>
+                </div>
+                <div class="box-body">
+                    <div class="province-desc" id="provinceDesc">加载中...</div>
+                </div>
+            </div>
+
+            <div class="grid-2">
+                <div class="box">
+                    <div class="box-header">
+                        <div class="box-title">建筑用途分布</div>
+                    </div>
+                    <div class="box-body chart-box-body">
+                        <div id="usageChart"></div>
+                    </div>
+                </div>
+
+                <div class="box">
+                    <div class="box-header">
+                        <div class="box-title">建筑年代分布</div>
+                    </div>
+                    <div class="box-body chart-box-body">
+                        <div id="periodChart"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="box">
+                <div class="box-header">
+                    <div class="box-title">古建筑分布地图</div>
+                </div>
+                <div class="map-box-body">
+                    <div id="mapWrapper">
+                        <object id="provinceMap" data="" type="image/svg+xml" style="width:100%; height:100%; display:block; border:none;"></object>
+                    </div>
+                    
+                    <div id="mapLoading">
+                        <div style="text-align:center;">
+                            <div style="font-size:40px; margin-bottom:10px;">◈</div>
+                            <div>加载地图中...</div>
+                        </div>
+                    </div>
+                    
+                    <div class="map-controls">
+                        <button onclick="MapController.zoomIn()" class="map-btn" title="放大">+</button>
+                        <button onclick="MapController.zoomOut()" class="map-btn" title="缩小">−</button>
+                        <button onclick="MapController.reset()" class="map-btn" title="重置">⌂</button>
+                    </div>
+                    
+                    <div class="map-credit-fixed" id="mapCredit">
+                        审图号：GS(2024)XXXX号 | 自然资源部监制
+                    </div>
+                    
+                    <div class="map-hint">
+                        拖拽移动 · 滚轮缩放
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- 【关键】必须先加载数据文件，再加载逻辑文件 -->
+    <script src="../json/profile-data.js"></script>
+    <script src="../js/profile.js"></script>
+</body>
+</html>

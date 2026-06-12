@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>华夏营造 - 全国数据</title>
+    <link rel="stylesheet" href="../css/style.css">
+    <script src="https://cdn.jsdelivr.net/npm/echarts@6.0.0/dist/echarts.min.js"></script>
+</head>
+<body>
+    <div id="particles"></div>
+    
+    <div class="container">
+        <header class="header">
+            <h1 class="main-title">华夏营造</h1>
+            <p class="sub-title">全国建筑文化遗产数据可视化</p>
+        </header>
+        
+        <section class="globe-section">
+            <div class="corner-bl"></div>
+            <div class="corner-br"></div>
+            <iframe src="./index.html" frameborder="0" scrolling="no"></iframe>
+            <div class="globe-hint">点击省份查看详情</div>
+        </section>
+        
+        <section class="charts-grid">
+            <div class="chart-card" id="c1"><div class="chart-box" id="chart1"></div></div>
+            <div class="chart-card" id="c2"><div class="chart-box" id="chart2"></div></div>
+            <div class="chart-card" id="c3"><div class="chart-box" id="chart3"></div></div>
+            <div class="chart-card" id="c4"><div class="chart-box" id="chart4"></div></div>
+            <div class="chart-card" id="c5"><div class="chart-box" id="chart5"></div></div>
+            <div class="chart-card" id="c6"><div class="chart-box" id="chart6"></div></div>
+        </section>
+    </div>
+
+    <script src="../js/echarts.js"></script>
+    <script src="../js/main.js"></script>
+</body>
+</html>

@@ -1,0 +1,145 @@
+<!-- welcome.html -->
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>
+        中国古建筑可视化平台
+    </title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+    <!-- 加载画面 -->
+    <div class="loader" id="loader">
+        <div class="loader-content">
+            <div class="loader-text font-calligraphy">
+                中国古代建筑成就可视化平台
+            </div>
+            <div class="loader-bar">
+                <div class="loader-progress">
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="main-container">
+        
+        <!-- 左侧视觉区：故宫角楼 -->
+        <div class="visual-section">
+            
+            <img src="img/bg.jpg" alt="背景图片" class="bg-image">
+            
+            <div class="gradient-overlay">
+            </div>
+            
+            <div class="particles" id="particles">
+            </div>
+            
+            <!-- 左下角浮动信息 -->
+            <div class="floating-info">
+                <div class="location-tag">
+                    <div class="location-icon">
+                        楼
+                    </div>
+                    <div>
+                        <div class="location-text">
+                            紫禁城 · 西北角楼
+                        </div>
+                        <div class="location-detail">
+                            九梁十八柱七十二条脊
+                        </div>
+                        <div class="coordinates">
+                            39° 54' 32" N | 116° 23' 15" E
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+        </div>
+
+        <!-- 右侧内容区 -->
+        <div class="content-section">
+            
+            <div class="decoration-line line-top">
+            </div>
+            <div class="decoration-line line-bottom">
+            </div>
+            <div class="decoration-line line-left">
+            </div>
+            <div class="decoration-line line-right">
+            </div>
+            
+            <div class="corner corner-tl">
+            </div>
+            <div class="corner corner-tr">
+            </div>
+            <div class="corner corner-bl">
+            </div>
+            <div class="corner corner-br">
+            </div>
+
+            <div class="header-area">
+                <h1 class="main-title font-calligraphy">
+                    华夏营造
+                </h1>
+                <p class="sub-title">
+                    Chinese Architectural Heritage Visualization
+                </p>
+            </div>
+
+            <div class="intro-area">
+                <p class="intro-text">
+                    跨越五千年的建筑智慧，从阿房宫的覆压三百余里，到故宫的九千九百九十九间半；
+                    从应县木塔的榫卯奇迹，到苏州园林的咫尺乾坤。
+                    在这里，数据与古建相遇，重现中华营造的辉煌史诗。
+                </p>
+            </div>
+
+            <div class="stats-area">
+                <div class="stat-item">
+                    <span class="stat-number" data-target="5000">
+                        0
+                    </span>
+                    <span class="stat-label">
+                        年历史跨度
+                    </span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-number" data-target="3000">
+                        0
+                    </span>
+                    <span class="stat-label">
+                        建筑实例
+                    </span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-number" data-target="56">
+                        0
+                    </span>
+                    <span class="stat-label">
+                        世界遗产
+                    </span>
+                </div>
+            </div>
+
+            <div class="button-area">
+                <!-- 修正后的路径 -->
+                <a href="../main/China/html/main.html" class="enter-button">
+                    进入展厅
+                    <span class="arrow-icon">
+                        →
+                    </span>
+                </a>
+            </div>
+            
+        </div>
+        
+    </div>
+
+    <script src="js/main.js">
+    </script>
+    
+</body>
+</html>

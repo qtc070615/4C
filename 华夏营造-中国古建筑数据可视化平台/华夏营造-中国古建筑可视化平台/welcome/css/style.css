@@ -1,0 +1,812 @@
+/* css/style.css */
+
+/* ========== 本地字体引入 ========== */
+
+@font-face {
+    font-family: 'Ma Shan Zheng';
+    src: url('../../fonts/MaShanZheng-Regular.ttf') format('truetype');
+    font-weight: normal;
+    font-style: normal;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'Noto Serif SC';
+    src: url('../../fonts/NotoSerifSC-Light.otf') format('opentype');
+    font-weight: 300;
+    font-style: normal;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'Noto Serif SC';
+    src: url('../../fonts/NotoSerifSC-Regular.otf') format('opentype');
+    font-weight: 400;
+    font-style: normal;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'Noto Serif SC';
+    src: url('../../fonts/NotoSerifSC-Bold.otf') format('opentype');
+    font-weight: 700;
+    font-style: normal;
+    font-display: swap;
+}
+
+/* ========== 通用书法字体类 ========== */
+.font-calligraphy {
+    font-family: 'Ma Shan Zheng', "KaiTi", "STKaiti", "楷体", cursive;
+}
+
+/* ========== 基础重置 ========== */
+
+:root {
+    --gold: #D4AF37;
+    --ink-black: rgba(15, 15, 15, 1);
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    -webkit-user-select: none;
+    user-select: none;
+    -webkit-touch-callout: none;
+}
+
+html, body {
+    font-family: 'Noto Serif SC', "Source Han Serif SC", "SimSun", "宋体", serif;
+    background: var(--ink-black);
+    color: rgba(255, 255, 255, 0.9);
+    height: 100%;
+    overflow: hidden;
+}
+
+/* ========== 主容器 ========== */
+
+.main-container {
+    width: 100%;
+    height: 100vh;
+    display: flex;
+    flex-direction: row;
+    /* 关键：作为粒子定位的参考（虽然粒子用fixed，但保持一致性） */
+    position: relative;
+}
+
+/* 左侧视觉区 */
+.visual-section {
+    flex: 0 0 60%;
+    height: 100vh;
+    position: relative;
+    overflow: hidden;
+    background-color: var(--ink-black);
+}
+
+.bg-image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: 20% center;
+    filter: brightness(0.9) contrast(1.05) saturate(1.1);
+    position: absolute;
+    inset: 0;
+    transform: none;
+}
+
+.gradient-overlay {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(90deg, 
+        rgba(15, 15, 15, 0) 0%,          
+        rgba(15, 15, 15, 0.2) 40%,       
+        rgba(15, 15, 15, 0.8) 85%,        
+        rgba(15, 15, 15, 1) 100%);       
+    z-index: 1;
+}
+
+/* ========== 角楼信息（完全弹性化） ========== */
+
+.floating-info {
+    position: absolute;
+    bottom: clamp(15px, 4vh, 40px);
+    left: clamp(15px, 4vw, 40px);
+    z-index: 10;
+    color: rgba(255, 255, 255, 0.9);
+    width: clamp(180px, 22vw, 320px);
+    max-width: 85%;
+    background: rgba(15, 15, 15, 0.6);
+    padding: clamp(8px, 1.5vh, 15px) clamp(10px, 1.5vw, 15px);
+    border-radius: 6px;
+    border: 1px solid rgba(212, 175, 55, 0.2);
+    backdrop-filter: blur(5px);
+}
+
+.location-tag {
+    display: flex;
+    align-items: flex-start;
+    gap: clamp(6px, 1vw, 10px);
+}
+
+.location-icon {
+    width: clamp(24px, 3.5vh, 36px);
+    height: clamp(24px, 3.5vh, 36px);
+    border: 1px solid rgba(255, 255, 255, 0.4);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: clamp(0.9rem, 2vh, 1.1rem);
+    flex-shrink: 0;
+    background: rgba(15, 15, 15, 0.5);
+    border-radius: 4px;
+}
+
+.location-text {
+    font-size: clamp(0.8rem, 2vh, 1.1rem);
+    letter-spacing: 0.1em;
+    margin-bottom: 2px;
+    font-weight: 500;
+    line-height: 1.2;
+}
+
+.location-detail {
+    font-size: clamp(0.7rem, 1.6vh, 0.9rem);
+    color: rgba(212, 175, 55, 0.9);
+    letter-spacing: 0.05em;
+    margin-bottom: 2px;
+    line-height: 1.2;
+}
+
+.coordinates {
+    font-size: clamp(0.65rem, 1.4vh, 0.85rem);
+    color: rgba(255, 255, 255, 0.6);
+    font-family: monospace;
+    letter-spacing: 0.02em;
+    line-height: 1.2;
+}
+
+/* ========== 右侧内容区 ========== */
+
+.content-section {
+    flex: 1 1 40%;
+    min-width: 320px;
+    height: 100vh;
+    background: var(--ink-black);
+    position: relative;
+    padding: 40px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-evenly;
+    align-items: center;
+    z-index: 10;  /* 确保在粒子之上（粒子z-index: 5） */
+    overflow: hidden;
+}
+
+/* 四条装饰线 */
+.decoration-line {
+    position: absolute;
+    background: var(--gold);
+    opacity: 0.3;
+}
+
+.line-top {
+    top: 40px;
+    left: 40px;
+    right: 40px;
+    height: 1px;
+}
+
+.line-bottom {
+    bottom: 40px;
+    left: 40px;
+    right: 40px;
+    height: 1px;
+}
+
+.line-left {
+    left: 40px;
+    top: 40px;
+    bottom: 40px;
+    width: 1px;
+}
+
+.line-right {
+    right: 40px;
+    top: 40px;
+    bottom: 40px;
+    width: 1px;
+}
+
+/* 四个角落 */
+.corner {
+    position: absolute;
+    width: 30px;
+    height: 30px;
+    border: 2px solid var(--gold);
+    opacity: 0.6;
+}
+
+.corner-tl {
+    top: 35px;
+    left: 35px;
+    border-right: 0;
+    border-bottom: 0;
+}
+
+.corner-tr {
+    top: 35px;
+    right: 35px;
+    border-left: 0;
+    border-bottom: 0;
+}
+
+.corner-bl {
+    bottom: 35px;
+    left: 35px;
+    border-right: 0;
+    border-top: 0;
+}
+
+.corner-br {
+    bottom: 35px;
+    right: 35px;
+    border-left: 0;
+    border-top: 0;
+}
+
+/* ========== 标题区 ========== */
+
+.header-area {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    flex: 1 1 25%;
+    width: 100%;
+    max-width: calc(100% - 20px);
+    overflow: hidden;
+    position: relative;
+}
+
+/* 修正：使用类选择器匹配HTML中的 class="main-title" */
+.main-title {
+    font-family: 'Ma Shan Zheng', "KaiTi", "STKaiti", "楷体", cursive;
+    font-size: clamp(1.5rem, 12vh, 4rem);
+    color: var(--gold);
+    letter-spacing: 0.15em;
+    line-height: 1.1;
+    text-shadow: 0 4px 20px rgba(212, 175, 55, 0.2);
+    position: relative;
+    display: inline-block;
+    font-weight: normal;
+    max-height: 60%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.main-title::after {
+    content: '';
+    position: absolute;
+    bottom: -10px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 80px;
+    height: 3px;
+    background: linear-gradient(90deg, var(--gold), transparent);
+}
+
+.sub-title {
+    font-family: 'Noto Serif SC', serif;
+    font-size: clamp(0.7rem, 2.5vh, 1rem);
+    color: rgba(255, 255, 255, 0.5);
+    letter-spacing: 0.2em;
+    font-weight: 300;
+    text-transform: uppercase;
+    text-align: center;
+    margin-top: 15px;
+    white-space: normal;
+    word-break: break-word;
+    overflow-wrap: break-word;
+    line-height: 1.5;
+    max-width: 100%;
+    padding: 0 10px;
+}
+
+/* ========== 介绍文本 ========== */
+
+.intro-area {
+    flex: 1 1 25%;
+    width: 100%;
+    max-width: calc(100% - 20px);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    overflow: visible;
+    padding: 0 10px;
+}
+
+.intro-text {
+    font-size: clamp(0.8rem, 2.5vh, 1.05rem);
+    color: rgba(255, 255, 255, 0.7);
+    line-height: 1.7;
+    text-align: center;
+    max-width: 100%;
+    overflow-wrap: break-word;
+    word-wrap: break-word;
+    display: block;
+    overflow: visible;
+}
+
+/* ========== 数据统计 ========== */
+
+.stats-area {
+    flex: 1 1 25%;
+    width: 100%;
+    max-width: calc(100% - 20px);
+    display: flex;
+    flex-direction: row;
+    justify-content: space-evenly;
+    align-items: center;
+    overflow: hidden;
+    padding: 0 10px;
+    gap: 20px;
+}
+
+.stat-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    flex: 1;
+    max-width: 33%;
+}
+
+.stat-number {
+    font-size: clamp(1.2rem, 5vh, 2.2rem);
+    color: var(--gold);
+    font-weight: 700;
+    line-height: 1;
+    margin-bottom: 5px;
+}
+
+.stat-label {
+    font-size: clamp(0.65rem, 2vh, 0.85rem);
+    color: rgba(255, 255, 255, 0.5);
+    letter-spacing: 0.1em;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 100%;
+}
+
+/* ========== 按钮区 ========== */
+
+.button-area {
+    flex: 1 1 25%;
+    width: 100%;
+    max-width: calc(100% - 20px);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    overflow: hidden;
+}
+
+.enter-button {
+    height: clamp(40px, 10vh, 60px);
+    padding: 0 clamp(20px, 4vw, 40px);
+    background: transparent;
+    border: 2px solid var(--gold);
+    color: var(--gold);
+    font-size: clamp(0.9rem, 3vh, 1.3rem);
+    letter-spacing: 0.2em;
+    cursor: pointer;
+    overflow: hidden;
+    transition: all 0.4s ease;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    font-family: 'Noto Serif SC', serif;
+    white-space: nowrap;
+    position: relative;
+    max-width: 90%;
+}
+
+.enter-button::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(212, 175, 55, 0.2), transparent);
+    transition: left 0.6s;
+}
+
+.enter-button:hover::before {
+    left: 100%;
+}
+
+.enter-button:hover {
+    background: rgba(212, 175, 55, 0.1);
+    box-shadow: 0 0 40px rgba(212, 175, 55, 0.3);
+    transform: translateX(5px);
+}
+
+.arrow-icon {
+    transition: transform 0.3s;
+    flex-shrink: 0;
+}
+
+.enter-button:hover .arrow-icon {
+    transform: translateX(10px);
+}
+
+/* ========== 加载动画 ========== */
+
+.loader {
+    position: fixed;
+    inset: 0;
+    background: var(--ink-black);
+    z-index: 100;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    transition: opacity 0.8s ease, visibility 0.8s;
+    padding: 20px;
+    min-height: 700px;
+}
+
+.loader.hidden {
+    opacity: 0;
+    visibility: hidden;
+}
+
+.loader-content {
+    text-align: center;
+    max-width: 90%;
+}
+
+/* 修正：允许多行显示并居中 */
+.loader-text {
+    font-family: 'Ma Shan Zheng', cursive;
+    font-size: clamp(1.5rem, 8vh, 3rem);
+    color: var(--gold);
+    letter-spacing: 0.15em;
+    margin-bottom: 30px;
+    text-align: center;
+    white-space: normal;
+    word-break: break-word;
+    overflow-wrap: break-word;
+    line-height: 1.4;
+    display: block;
+    max-width: 100%;
+}
+
+.loader-bar {
+    width: 200px;
+    height: 2px;
+    background: rgba(212, 175, 55, 0.2);
+    margin: 0 auto;
+    position: relative;
+    overflow: hidden;
+}
+
+.loader-progress {
+    position: absolute;
+    left: 0;
+    top: 0;
+    height: 100%;
+    width: 0%;
+    background: var(--gold);
+    animation: load 2s ease-out forwards;
+}
+
+@keyframes load {
+    to {
+        width: 100%;
+    }
+}
+
+/* ========== 粒子效果（大厅同款：底部升起大号金色光点） ========== */
+
+.particles {
+    position: fixed;
+    inset: 0;
+    z-index: 5;
+    pointer-events: none;
+    overflow: hidden;
+}
+
+.particle {
+    position: absolute;
+    background: var(--gold);
+    border-radius: 50%;
+    opacity: 0.8;
+    /* 大厅同款发光效果 */
+    box-shadow: 
+        0 0 6px rgba(212, 175, 55, 0.6),
+        0 0 12px rgba(212, 175, 55, 0.3);
+    animation: rise linear infinite;
+    /* 尺寸由JS动态设置 3-6px */
+}
+
+/* 向上飘升动画（从底部到顶部） */
+@keyframes rise {
+    0% {
+        transform: translateY(0) scale(0.8);
+        opacity: 0;
+    }
+    10% {
+        opacity: 0.9;
+    }
+    90% {
+        opacity: 0.5;
+    }
+    100% {
+        transform: translateY(-100vh) scale(1.2);
+        opacity: 0;
+    }
+}
+
+/* ========== 中间断点（1000px-1200px） ========== */
+
+@media (max-width: 1200px) and (min-width: 1001px) {
+    .stats-area {
+        flex-direction: column;
+        gap: 15px;
+        justify-content: center;
+    }
+    
+    .stat-item {
+        flex-direction: row;
+        align-items: center;
+        justify-content: center;
+        gap: 15px;
+        max-width: 100%;
+        width: 100%;
+    }
+    
+    .stat-number {
+        font-size: clamp(1.5rem, 4vh, 2rem);
+        margin-bottom: 0;
+    }
+    
+    .stat-label {
+        font-size: clamp(0.8rem, 2.2vh, 1rem);
+    }
+    
+    .intro-text {
+        font-size: clamp(0.85rem, 2.2vh, 1rem);
+        line-height: 1.6;
+    }
+}
+
+/* ========== 手机端（1000px以下） ========== */
+
+@media (max-width: 1000px) {
+    html, body {
+        overflow: hidden;
+        height: 100vh;
+        width: 100vw;
+    }
+    
+    .main-container {
+        flex-direction: column;
+        height: 100vh;
+        width: 100vw;
+        overflow: hidden;
+    }
+    
+    .visual-section {
+        flex: 0 0 40vh;
+        width: 100%;
+        height: 40vh;
+        min-height: 250px;
+        overflow: hidden;
+    }
+    
+    .floating-info {
+        left: auto;
+        right: clamp(10px, 3vw, 20px);
+        bottom: clamp(10px, 3vh, 20px);
+        width: clamp(160px, 50vw, 220px);
+        max-width: 70%;
+        padding: clamp(8px, 2vh, 12px);
+    }
+    
+    .gradient-overlay {
+        background: linear-gradient(180deg, 
+            rgba(15, 15, 15, 0) 0%,          
+            rgba(15, 15, 15, 0.3) 50%,       
+            rgba(15, 15, 15, 0.95) 90%,        
+            rgba(15, 15, 15, 1) 100%);
+    }
+    
+    .content-section {
+        flex: 1 1 auto;
+        width: 100%;
+        height: 60vh;
+        min-height: 300px;
+        padding: 20px 15px;
+        overflow: hidden;
+        justify-content: space-between;
+        align-items: center;
+        gap: 10px;
+    }
+    
+    .content-section::-webkit-scrollbar {
+        display: none;
+    }
+    .content-section {
+        -ms-overflow-style: none;
+        scrollbar-width: none;
+    }
+    
+    .decoration-line,
+    .corner {
+        display: none;
+    }
+    
+    .header-area {
+        flex: 0 0 auto;
+        margin: 5px 0;
+        gap: 8px;
+        max-height: 25%;
+    }
+    
+    .main-title {
+        font-size: clamp(1.6rem, 7vh, 2.4rem);
+        letter-spacing: 0.1em;
+    }
+    
+    .main-title::after {
+        bottom: -6px;
+        width: 60px;
+        height: 2px;
+    }
+    
+    .sub-title {
+        font-size: clamp(0.65rem, 1.8vh, 0.9rem);
+        letter-spacing: 0.15em;
+        margin-top: 8px;
+        white-space: normal;
+        word-break: break-word;
+        line-height: 1.5;
+        padding: 0 15px;
+    }
+    
+    .intro-area {
+        flex: 0 0 auto;
+        margin: 5px 0;
+        padding: 0 10px;
+        max-height: 30%;
+    }
+    
+    .intro-text {
+        font-size: clamp(0.8rem, 2.2vh, 1rem);
+        line-height: 1.5;
+        display: -webkit-box;
+        -webkit-line-clamp: 3;
+        line-clamp: 3;  /* 【添加】标准属性，消除兼容性警告 */
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+    }
+    
+    .stats-area {
+        flex: 0 0 auto;
+        flex-direction: row;
+        justify-content: center;
+        gap: clamp(20px, 8vw, 40px);
+        margin: 10px 0;
+        width: 100%;
+        max-height: 20%;
+    }
+    
+    .stat-item {
+        flex-direction: column;
+        gap: 4px;
+    }
+    
+    .stat-number {
+        font-size: clamp(1.3rem, 5vh, 1.8rem);
+        margin-bottom: 2px;
+    }
+    
+    .stat-label {
+        font-size: clamp(0.6rem, 1.8vh, 0.85rem);
+    }
+    
+    .button-area {
+        flex: 0 0 auto;
+        margin: 10px 0 25px 0;
+        padding-bottom: 10px;
+        width: 100%;
+        max-height: 20%;
+    }
+    
+    .enter-button {
+        height: clamp(40px, 8vh, 50px);
+        padding: 0 clamp(25px, 8vw, 40px);
+        font-size: clamp(0.9rem, 2.5vh, 1.1rem);
+        border-width: 1.5px;
+        margin-bottom: 5px;
+    }
+}
+
+@media (max-width: 480px) {
+    .visual-section {
+        flex: 0 0 35vh;
+        height: 35vh;
+        min-height: 200px;
+    }
+    
+    .content-section {
+        height: 65vh;
+        min-height: 280px;
+        padding: 15px 12px;
+        gap: 8px;
+    }
+    
+    .floating-info {
+        right: 10px;
+        bottom: 10px;
+        width: 150px;
+        transform: scale(0.9);
+    }
+    
+    .location-icon {
+        display: none;
+    }
+    
+    .main-title {
+        font-size: 1.5rem;
+    }
+    
+    .sub-title {
+        font-size: 0.6rem;
+        white-space: normal;
+        word-break: break-word;
+        line-height: 1.4;
+        padding: 0 10px;
+    }
+    
+    .intro-text {
+        font-size: 0.75rem;
+        line-height: 1.4;
+        -webkit-line-clamp: 2;
+        line-clamp: 2;  /* 【添加】标准属性，消除兼容性警告 */
+    }
+    
+    .stats-area {
+        gap: 15px;
+    }
+    
+    .stat-number {
+        font-size: 1.2rem;
+    }
+    
+    .stat-label {
+        font-size: 0.6rem;
+    }
+    
+    .button-area {
+        margin-bottom: 20px;
+    }
+    
+    .enter-button {
+        height: 38px;
+        padding: 0 20px;
+        font-size: 0.85rem;
+    }
+    
+    .loader-text {
+        font-size: 1.3rem;
+        white-space: normal;
+        word-break: break-word;
+        line-height: 1.4;
+        padding: 0 20px;
+    }
+}

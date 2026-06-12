@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>建筑详情</title>
+    <link rel="stylesheet" href="../css/building.css">
+</head>
+<body>
+
+    <button class="mobile-toggle" id="mobileToggle">▶</button>
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <h2 class="sidebar-title" id="sidebarProvince">省份</h2>
+        </div>
+        <ul class="building-list">
+            <li class="building-item">
+                <a href="./profile.html" class="building-link hall-link inactive" id="hallLink">大厅</a>
+            </li>
+            <div id="buildingListContainer"></div>
+        </ul>
+    </aside>
+
+    <div class="immersive-mode" id="immersiveMode">
+        <div class="immersive-image-container">
+            <img id="immersiveImage" src="" alt="">
+        </div>
+        <div class="immersive-overlay"></div>
+        
+        <div class="immersive-top-bar">
+            <a href="./profile.html" class="back-btn" id="backToHall">← 返回大厅</a>
+            <div class="meta-info"><span id="immersivePeriod">年代</span></div>
+        </div>
+        
+        <div class="immersive-title">
+            <h1 id="immersiveBuildingName">建筑名</h1>
+            <p id="immersiveBuildingEnName">Building Name</p>
+        </div>
+        
+        <!-- 修改：改为金色圆角提示框样式，文字更新 -->
+        <div class="scroll-hint" id="scrollHint">
+            <div class="scroll-arrow">↓</div>
+            <div class="scroll-text">点击任意位置返回</div>
+        </div>
+    </div>
+
+    <main class="main-content" id="mainContent">
+        <div class="particle-layer" id="particleLayer"></div>
+
+        <div class="top-bar">
+            <a href="../../main/China/html/main.html" class="back-btn">← 返回全国地图</a>
+            <div class="meta-info"><span id="buildingPeriod">年代</span></div>
+        </div>
+
+        <div class="hero-image-container" id="heroContainer">
+            <img id="heroImage" src="" alt="">
+            <div class="hero-overlay"></div>
+            <div class="hero-title">
+                <h1 id="buildingName">建筑名</h1>
+                <p id="buildingEnName">Building Name</p>
+                <div class="building-meta" id="buildingTags">
+                    <span class="tag" id="tagLevel">级别</span>
+                    <span class="meta-divider">|</span>
+                    <span class="tag" id="tagPeriod">年代</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="content-area" id="contentArea">
+            <div class="breadcrumb">
+                <a href="../../main/China/html/main.html">全国</a>
+                <span>></span>
+                <a href="./profile.html" id="crumbProvince">省份</a>
+                <span>></span>
+                <span id="crumbBuildingName">建筑名</span>
+            </div>
+            
+            <div class="box glass-box" style="margin-bottom: 25px;">
+                <div class="box-header">
+                    <div class="box-title">建筑概况</div>
+                </div>
+                <div class="box-body">
+                    <div class="building-desc" id="buildingDesc">加载中...</div>
+                    <a href="#" class="baidu-link" id="baiduLink" target="_blank">
+                        <span>查看百科</span>
+                        <span class="link-arrow">→</span>
+                    </a>
+                </div>
+            </div>
+
+            <div class="grid-2">
+                <div class="box glass-box">
+                    <div class="box-header">
+                        <div class="box-title">建筑特色</div>
+                    </div>
+                    <div class="box-body">
+                        <ul class="feature-list" id="featureList"></ul>
+                    </div>
+                </div>
+
+                <div class="box glass-box map-box">
+                    <div class="box-header">
+                        <div class="box-title">地理位置</div>
+                    </div>
+                    <div class="box-body map-container">
+                        <img id="mapImage" src="" alt="地图位置">
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- 先加载数据文件，再加载逻辑文件 -->
+    <script src="../json/building-data.js"></script>
+    <script src="../json/profile-data.js"></script>
+    <script src="../js/building.js"></script>
+</body>
+</html>
