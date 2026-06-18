@@ -1,6 +1,6 @@
 @font-face {
     font-family: 'Ma Shan Zheng';
-    src: url('../../fonts/MaShanZheng-Regular.ttf') format('truetype');
+    src: url('../../../fonts/MaShanZheng-Regular.ttf') format('truetype');
     font-display: swap;
 }
 
