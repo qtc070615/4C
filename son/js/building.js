@@ -18,7 +18,14 @@ const BuildingApp = {
         this.loadBuildingData(buildingName);
         this.loadProvinceData(provinceName);
         
-        this.initSidebarMenu();
+        const menuContainer = document.getElementById('menuAccordion');
+        const isMenuReady = menuContainer && menuContainer.children.length > 0 && !menuContainer.querySelector('.menu-no-result');
+        if (isMenuReady) {
+            this.updateMenuHighlight();
+        } else {
+            this.initSidebarMenu();
+        }
+        
         this.initParticles();
         this.initImmersiveMode();
         this.initCompactNav();
@@ -101,6 +108,23 @@ const BuildingApp = {
         } catch (error) {
             console.error('加载省份数据失败:', error);
         }
+    },
+
+    updateMenuHighlight() {
+        const container = document.getElementById('menuAccordion');
+        if (!container || !this.data.currentProvince) return;
+        const currentProvinceName = this.data.currentProvince.name;
+        const currentBuildingName = this.data.currentBuilding?.name || '';
+        
+        container.querySelectorAll('.accordion-item').forEach(i => i.classList.remove('active'));
+        container.querySelectorAll('.accordion-link').forEach(l => l.classList.remove('current'));
+        
+        container.querySelectorAll(`[data-pname="${currentProvinceName}"]`).forEach(i => {
+            i.classList.add('active');
+        });
+        container.querySelectorAll('.accordion-link').forEach(l => {
+            if (l.dataset.name === currentBuildingName) l.classList.add('current');
+        });
     },
 
     initSidebarMenu() {
@@ -189,7 +213,6 @@ const BuildingApp = {
                     const isActive = item.classList.contains('active');
                     const willBeActive = !isActive;
 
-                    // 建筑页：点击任何省份都先滚动展开，再跳转大厅
                     const allItems = container.querySelectorAll(`[data-pname="${pname}"]`);
                     const containerRect = container.getBoundingClientRect();
                     let targetEl = null;
@@ -213,7 +236,6 @@ const BuildingApp = {
                     setTimeout(() => {
                         doExpand(pname, willBeActive);
                         container.addEventListener('scroll', handleLoopScroll, { passive: true });
-                        // 建筑页点击任何省份都跳转大厅
                         window.location.href = href;
                     }, 350);
                 });
@@ -468,6 +490,8 @@ const BuildingApp = {
     }
 };
 
-document.addEventListener('DOMContentLoaded', () => {
+const init = () => {
     BuildingApp.init();
-});
+};
+document.addEventListener('DOMContentLoaded', init);
+document.addEventListener('turbo:load', init);

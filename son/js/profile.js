@@ -33,7 +33,16 @@ const App = {
         this.loadProvinceData(provinceName);
         
         this.lastWidth = window.innerWidth;
-        this.initSidebarMenu();
+        
+        // Turbo 导航后菜单已存在（permanent），只更新高亮
+        const menuContainer = document.getElementById('menuAccordion');
+        const isMenuReady = menuContainer && menuContainer.children.length > 0 && !menuContainer.querySelector('.menu-no-result');
+        if (isMenuReady) {
+            this.updateMenuHighlight();
+        } else {
+            this.initSidebarMenu();
+        }
+        
         this.initParticles();
         setTimeout(() => this.initCharts(), 100);
         this.initMap();
@@ -126,6 +135,17 @@ const App = {
         }
     },
 
+    updateMenuHighlight() {
+        const container = document.getElementById('menuAccordion');
+        if (!container || !this.currentProvince) return;
+        const currentProvinceName = this.currentProvince.name;
+        
+        container.querySelectorAll('.accordion-item').forEach(i => i.classList.remove('active'));
+        container.querySelectorAll(`[data-pname="${currentProvinceName}"]`).forEach(i => {
+            i.classList.add('active');
+        });
+    },
+
     initSidebarMenu() {
         const container = document.getElementById('menuAccordion');
         const searchInput = document.getElementById('menuSearch');
@@ -185,13 +205,11 @@ const App = {
         };
 
         const doExpand = (pname, willBeActive) => {
-            // 手风琴：非搜索状态下收起其他省份
             if (!searchInput.value.trim()) {
                 container.querySelectorAll('.accordion-item').forEach(i => {
                     if (i.dataset.pname !== pname) i.classList.remove('active');
                 });
             }
-            // 同步展开/收起所有同名项（含克隆体）
             container.querySelectorAll(`[data-pname="${pname}"]`).forEach(i => {
                 i.classList.toggle('active', willBeActive);
             });
@@ -217,7 +235,6 @@ const App = {
                     const isProfilePage = window.location.pathname.includes('profile.html');
                     const isCurrentProvince = isProfilePage && currentPageProvince === pname;
 
-                    // 1. 先滚动到目标省份置顶（只向下滚，不回滚）
                     const allItems = container.querySelectorAll(`[data-pname="${pname}"]`);
                     const containerRect = container.getBoundingClientRect();
                     let targetEl = null;
@@ -226,30 +243,22 @@ const App = {
                     allItems.forEach(el => {
                         const rect = el.getBoundingClientRect();
                         const dist = rect.top - containerRect.top;
-                        // 只选在分界线下方或刚好贴线的
                         if (dist >= -2 && dist < minDist) {
                             minDist = dist;
                             targetEl = el;
                         }
                     });
-                    // 如果都在上方，取克隆体（最后一份，在下方）
-                    if (!targetEl) {
-                        targetEl = allItems[allItems.length - 1];
-                    }
+                    if (!targetEl) targetEl = allItems[allItems.length - 1];
 
                     const scrollOffset = targetEl.getBoundingClientRect().top - containerRect.top + container.scrollTop;
 
-                    // 临时禁用循环监听，避免 smooth 被干扰
                     container.removeEventListener('scroll', handleLoopScroll, { passive: true });
                     container.scrollTo({ top: scrollOffset, behavior: 'smooth' });
 
-                    // 2. 滚动动画完成后（350ms），再展开/收起
-                    //    这样展开只向下推，收起发生在上方（屏幕外），不会"向上挤压"
                     setTimeout(() => {
                         doExpand(pname, willBeActive);
                         container.addEventListener('scroll', handleLoopScroll, { passive: true });
 
-                        // 3. 如果是其他省份，跳转大厅
                         if (!isCurrentProvince) {
                             window.location.href = href;
                         }
@@ -775,10 +784,11 @@ const MapController = {
     }
 };
 
-document.addEventListener('DOMContentLoaded', () => {
-    console.log('【调试】DOM 加载完成，2秒后初始化 App');
+const init = () => {
     setTimeout(() => App.init(), 100);
-});
+};
+document.addEventListener('DOMContentLoaded', init);
+document.addEventListener('turbo:load', init);
 
 window.addEventListener('beforeunload', () => {
     App.destroy();

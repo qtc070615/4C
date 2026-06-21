@@ -2,6 +2,7 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
+    <script type="module" src="https://unpkg.com/@hotwired/turbo@8.0.4/dist/turbo.es2017-esm.js"></script>
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>建筑详情</title>
     <link rel="stylesheet" href="../css/building.css">
@@ -11,7 +12,7 @@
     <button class="mobile-toggle" id="mobileToggle">▶</button>
     <div class="sidebar-overlay" id="sidebarOverlay"></div>
 
-    <aside class="sidebar" id="sidebar">
+    <aside class="sidebar" id="sidebar" data-turbo-permanent>
         <div class="sidebar-header">
             <div class="menu-search-box">
                 <input type="text" id="menuSearch" placeholder="搜索省份或建筑..." autocomplete="off">
