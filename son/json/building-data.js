@@ -1,4 +1,4 @@
-const BUILDING_DB = {
+var BUILDING_DB = typeof BUILDING_DB !== 'undefined' ? BUILDING_DB : {
     "buildings": [
         {
             "name": "故宫",

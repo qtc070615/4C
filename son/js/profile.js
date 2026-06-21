@@ -1,5 +1,4 @@
-// 华夏营造 - 省份大厅主逻辑
-const App = {
+var App = typeof App !== 'undefined' ? App : {
     charts: { usage: null, period: null },
     resizeObserver: null,
     lastWidth: window.innerWidth,
@@ -11,7 +10,6 @@ const App = {
             return;
         }
 
-        // 读取之前保存的菜单状态
         const saved = sessionStorage.getItem('menuState');
         if (saved) {
             try { this._pendingMenuState = JSON.parse(saved); } catch(e) {}
@@ -187,10 +185,8 @@ const App = {
                     const urlParams = new URLSearchParams(window.location.search);
                     const isCurrent = window.location.pathname.includes('profile.html') && urlParams.get('province') === pname;
 
-                    // 保存状态
                     saveMenuState();
 
-                    // 滚动到目标省份置顶（只向下滚）
                     const allItems = container.querySelectorAll(`[data-pname="${pname}"]`);
                     const containerRect = container.getBoundingClientRect();
                     let targetEl = null;
@@ -291,7 +287,6 @@ const App = {
 
         render(allProvinces, false);
 
-        // 恢复之前保存的状态
         if (this._pendingMenuState) {
             const state = this._pendingMenuState;
             if (state.activeProvince) {
@@ -559,7 +554,7 @@ const App = {
     }
 };
 
-const MapController = {
+var MapController = typeof MapController !== 'undefined' ? MapController : {
     mapObj: null, wrapper: null, scale: 1, translateX: 0, translateY: 0,
     isDragging: false, startX: 0, startY: 0,
 
@@ -628,7 +623,11 @@ const MapController = {
     reset() { this.scale = 1; this.translateX = 0; this.translateY = 0; this.updateTransform(); }
 };
 
-const init = () => { setTimeout(() => App.init(), 100); };
-document.addEventListener('DOMContentLoaded', init);
-document.addEventListener('turbo:load', init);
-window.addEventListener('beforeunload', () => { App.destroy(); });
+var __profileInitAttached = typeof __profileInitAttached !== 'undefined' ? __profileInitAttached : false;
+if (!__profileInitAttached) {
+    __profileInitAttached = true;
+    const init = () => { setTimeout(() => App.init(), 100); };
+    document.addEventListener('DOMContentLoaded', init);
+    document.addEventListener('turbo:load', init);
+    window.addEventListener('beforeunload', () => { App.destroy(); });
+}

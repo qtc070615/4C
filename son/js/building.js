@@ -1,4 +1,4 @@
-const BuildingApp = {
+var BuildingApp = typeof BuildingApp !== 'undefined' ? BuildingApp : {
     data: {
         isImmersive: false,
         currentBuilding: null,
@@ -7,7 +7,6 @@ const BuildingApp = {
     },
 
     init() {
-        // 读取之前保存的菜单状态
         const saved = sessionStorage.getItem('menuState');
         if (saved) {
             try { this._pendingMenuState = JSON.parse(saved); } catch(e) {}
@@ -327,7 +326,6 @@ const BuildingApp = {
 
         render(allProvinces, false);
 
-        // 恢复之前保存的状态
         if (this._pendingMenuState) {
             const state = this._pendingMenuState;
             if (state.activeProvince) {
@@ -492,6 +490,10 @@ const BuildingApp = {
     }
 };
 
-const init = () => { BuildingApp.init(); };
-document.addEventListener('DOMContentLoaded', init);
-document.addEventListener('turbo:load', init);
+var __buildingInitAttached = typeof __buildingInitAttached !== 'undefined' ? __buildingInitAttached : false;
+if (!__buildingInitAttached) {
+    __buildingInitAttached = true;
+    const init = () => { BuildingApp.init(); };
+    document.addEventListener('DOMContentLoaded', init);
+    document.addEventListener('turbo:load', init);
+}

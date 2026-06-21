@@ -12,7 +12,7 @@
  * 5. 注意：JSON 格式严格，最后一个字段后面不能有逗号
  */
 
-const PROFILE_DB = {
+var PROFILE_DB = typeof PROFILE_DB !== 'undefined' ? PROFILE_DB : {
     "provinces": [
 
         {
