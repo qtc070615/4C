@@ -91,21 +91,18 @@ var App = typeof App !== 'undefined' ? App : {
         const allProvinces = PROFILE_DB.provinces;
         const currentProvinceName = this.currentProvince?.name || '';
         const originalTexts = new Map();
-        let loopEnabled = false;
-        let originalHeight = 0;
 
-        const buildHtml = (provinces, isClone) => {
+        const buildHtml = (provinces) => {
             return provinces.map((province, pIdx) => {
                 const isActive = province.name === currentProvinceName ? 'active' : '';
                 const buildings = province.buildings || [];
-                const loopAttr = isClone ? 'data-loop="clone"' : '';
                 const links = buildings.map(b => {
                     const href = `./building.html?name=${encodeURIComponent(b.name)}&province=${encodeURIComponent(province.name)}`;
                     return `<a href="${href}" class="accordion-link" data-pidx="${pIdx}" data-name="${b.name}">${b.name}</a>`;
                 }).join('');
 
                 return `
-                    <div class="accordion-item ${isActive}" data-pidx="${pIdx}" data-pname="${province.name}" ${loopAttr}>
+                    <div class="accordion-item ${isActive}" data-pidx="${pIdx}" data-pname="${province.name}">
                         <a href="./profile.html?province=${encodeURIComponent(province.name)}" class="accordion-header" data-pidx="${pIdx}">
                             <span class="header-text">${province.name}</span>
                         </a>
@@ -115,20 +112,12 @@ var App = typeof App !== 'undefined' ? App : {
             }).join('');
         };
 
-        const render = (items, isSearch = false) => {
+        const render = (items) => {
             if (!items || items.length === 0) {
                 container.innerHTML = '<div class="menu-no-result">未找到匹配结果</div>';
-                loopEnabled = false;
                 return;
             }
-            if (!isSearch && items.length === allProvinces.length) {
-                container.innerHTML = buildHtml(items, false) + buildHtml(items, true);
-                loopEnabled = true;
-                requestAnimationFrame(() => { originalHeight = container.scrollHeight / 2; });
-            } else {
-                container.innerHTML = buildHtml(items, false);
-                loopEnabled = false;
-            }
+            container.innerHTML = buildHtml(items);
             container.querySelectorAll('.header-text, .accordion-link').forEach(el => {
                 originalTexts.set(el, el.textContent);
             });
@@ -145,9 +134,6 @@ var App = typeof App !== 'undefined' ? App : {
             container.querySelectorAll(`[data-pname="${pname}"]`).forEach(i => {
                 i.classList.toggle('active', willBeActive);
             });
-            if (loopEnabled) {
-                requestAnimationFrame(() => { originalHeight = container.scrollHeight / 2; });
-            }
         };
 
         const turboNavigate = (href) => {
@@ -186,47 +172,21 @@ var App = typeof App !== 'undefined' ? App : {
                     const isCurrent = window.location.pathname.includes('profile.html') && urlParams.get('province') === pname;
 
                     saveMenuState();
+                    doExpand(pname, willBeActive);
 
-                    const allItems = container.querySelectorAll(`[data-pname="${pname}"]`);
-                    const containerRect = container.getBoundingClientRect();
-                    let targetEl = null;
-                    let minDist = Infinity;
-                    allItems.forEach(el => {
-                        const dist = el.getBoundingClientRect().top - containerRect.top;
-                        if (dist >= -2 && dist < minDist) {
-                            minDist = dist;
-                            targetEl = el;
-                        }
-                    });
-                    if (!targetEl) targetEl = allItems[allItems.length - 1];
-
-                    const scrollOffset = targetEl.getBoundingClientRect().top - containerRect.top + container.scrollTop;
-                    container.removeEventListener('scroll', handleLoopScroll, { passive: true });
-                    container.scrollTo({ top: scrollOffset, behavior: 'smooth' });
-
-                    setTimeout(() => {
-                        doExpand(pname, willBeActive);
-                        container.addEventListener('scroll', handleLoopScroll, { passive: true });
-                        if (!isCurrent) turboNavigate(href);
-                    }, 350);
+                    if (!isCurrent) {
+                        setTimeout(() => turboNavigate(href), 80);
+                    }
                 });
             });
         };
-
-        const handleLoopScroll = () => {
-            if (!loopEnabled || !originalHeight) return;
-            const st = container.scrollTop;
-            if (st >= originalHeight) container.scrollTop = st - originalHeight;
-            else if (st < 0) container.scrollTop = st + originalHeight;
-        };
-        container.addEventListener('scroll', handleLoopScroll, { passive: true });
 
         const escapeRegex = (str) => str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
         const filter = (keyword) => {
             if (!keyword) {
-                render(allProvinces, false);
-                const current = container.querySelector(`[data-pname="${currentProvinceName}"]:not([data-loop])`);
+                render(allProvinces);
+                const current = container.querySelector(`[data-pname="${currentProvinceName}"]`);
                 if (current) current.classList.add('active');
                 const noResult = container.querySelector('.menu-no-result');
                 if (noResult) noResult.remove();
@@ -235,7 +195,7 @@ var App = typeof App !== 'undefined' ? App : {
             const lowerK = keyword.toLowerCase();
             let hasAnyMatch = false;
             allProvinces.forEach((province, pIdx) => {
-                const item = container.querySelector(`.accordion-item[data-pidx="${pIdx}"]:not([data-loop])`);
+                const item = container.querySelector(`.accordion-item[data-pidx="${pIdx}"]`);
                 if (!item) return;
                 const headerText = item.querySelector('.header-text');
                 const links = item.querySelectorAll('.accordion-link');
@@ -285,25 +245,33 @@ var App = typeof App !== 'undefined' ? App : {
             noResult.style.display = hasAnyMatch ? 'none' : 'block';
         };
 
-        render(allProvinces, false);
+        render(allProvinces);
 
         if (this._pendingMenuState) {
             const state = this._pendingMenuState;
-            if (state.activeProvince) {
-                if (!state.searchValue) {
-                    container.querySelectorAll('.accordion-item').forEach(i => i.classList.remove('active'));
+            const doRestore = () => {
+                if (state.activeProvince) {
+                    if (!state.searchValue) {
+                        container.querySelectorAll('.accordion-item').forEach(i => i.classList.remove('active'));
+                    }
+                    container.querySelectorAll(`[data-pname="${state.activeProvince}"]`).forEach(i => {
+                        i.classList.add('active');
+                    });
                 }
-                container.querySelectorAll(`[data-pname="${state.activeProvince}"]`).forEach(i => {
-                    i.classList.add('active');
+                if (state.searchValue) {
+                    searchInput.value = state.searchValue;
+                    filter(state.searchValue);
+                }
+                requestAnimationFrame(() => {
+                    requestAnimationFrame(() => {
+                        setTimeout(() => {
+                            container.scrollTop = state.scrollTop || 0;
+                        }, 200);
+                    });
                 });
-                if (loopEnabled) requestAnimationFrame(() => { originalHeight = container.scrollHeight / 2; });
-            }
-            if (state.searchValue) {
-                searchInput.value = state.searchValue;
-                filter(state.searchValue);
-            }
-            setTimeout(() => { container.scrollTop = state.scrollTop || 0; }, 50);
-            this._pendingMenuState = null;
+                this._pendingMenuState = null;
+            };
+            requestAnimationFrame(doRestore);
         }
 
         searchInput.addEventListener('input', (e) => filter(e.target.value.trim()));
