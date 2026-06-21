@@ -8,7 +8,6 @@ const App = {
     init() {
         console.log('【调试】App.init() 开始执行');
         
-        // 检查 PROFILE_DB 是否存在
         if (typeof PROFILE_DB === 'undefined') {
             console.error('【错误】PROFILE_DB 未定义！请检查：');
             console.error('1. profile-data.js 是否正确引入');
@@ -34,7 +33,7 @@ const App = {
         this.loadProvinceData(provinceName);
         
         this.lastWidth = window.innerWidth;
-        this.initBuildingList();
+        this.initSidebarMenu();
         this.initParticles();
         setTimeout(() => this.initCharts(), 100);
         this.initMap();
@@ -72,66 +71,43 @@ const App = {
             
             console.log('【调试】找到省份数据：', this.currentProvince.name);
 
-            // 1. 侧边栏省份名
-            const provinceNameEl = document.getElementById('provinceName');
-            if (provinceNameEl) {
-                provinceNameEl.textContent = this.currentProvince.name;
-                console.log('【调试】已更新 provinceName');
-            } else {
-                console.warn('【警告】未找到元素 #provinceName');
-            }
-
-            // 2. 页面标题
             const pageTitleEl = document.getElementById('pageTitle');
             if (pageTitleEl) {
                 pageTitleEl.textContent = this.currentProvince.name;
                 console.log('【调试】已更新 pageTitle');
             }
 
-            // 3. 英文名
             const pageEnNameEl = document.getElementById('pageEnName');
             if (pageEnNameEl) {
                 pageEnNameEl.textContent = this.currentProvince.enName;
             }
 
-            // 4. 省情描述
             const provinceDescEl = document.getElementById('provinceDesc');
             if (provinceDescEl) {
                 provinceDescEl.innerHTML = this.currentProvince.desc.replace(/\n/g, '<br>');
             }
 
-            // 5. 建筑数量（顶部）
             const buildingNumEl = document.getElementById('buildingNum');
             if (buildingNumEl) {
                 buildingNumEl.textContent = this.currentProvince.buildingCount;
             }
 
-            // 6. 导航栏省份名
             const navProvinceNameEl = document.getElementById('navProvinceName');
             if (navProvinceNameEl) {
                 navProvinceNameEl.textContent = this.currentProvince.name;
             }
 
-            // 7. 导航栏建筑数量
             const navBuildingCountEl = document.getElementById('navBuildingCount');
             if (navBuildingCountEl) {
                 navBuildingCountEl.textContent = `现存 ${this.currentProvince.buildingCount} 处`;
             }
 
-            // 8. 大厅链接更新
-            const hallLinkEl = document.getElementById('hallLink');
-            if (hallLinkEl) {
-                hallLinkEl.href = `./profile.html?province=${encodeURIComponent(this.currentProvince.name)}`;
-            }
-
-            // 9. 地图文件
             const provinceMapEl = document.getElementById('provinceMap');
             if (provinceMapEl) {
                 provinceMapEl.data = `../map/${this.currentProvince.mapFile}`;
                 console.log('【调试】地图文件路径：', provinceMapEl.data);
             }
 
-            // 10. 审图号
             const mapCreditEl = document.getElementById('mapCredit');
             if (mapCreditEl) {
                 if (this.currentProvince.mapCredit) {
@@ -150,33 +126,225 @@ const App = {
         }
     },
 
-    initBuildingList() {
-        console.log('【调试】初始化建筑列表');
-        const container = document.getElementById('buildingListContainer');
-        if (!container) {
-            console.warn('【警告】未找到 buildingListContainer');
-            return;
-        }
-        if (!this.currentProvince) {
-            console.warn('【警告】currentProvince 为空，无法加载建筑列表');
-            return;
-        }
-        
-        container.innerHTML = '';
-        
-        if (!this.currentProvince.buildings || this.currentProvince.buildings.length === 0) {
-            console.warn('【警告】该省份没有建筑数据');
-            return;
-        }
-        
-        console.log('【调试】加载建筑数量：', this.currentProvince.buildings.length);
-        
-        this.currentProvince.buildings.forEach(b => {
-            const li = document.createElement('li');
-            li.className = 'building-item';
-            li.innerHTML = `<a href="./building.html?name=${encodeURIComponent(b.name)}&province=${encodeURIComponent(this.currentProvince.name)}" class="building-link">${b.name}</a>`;
-            container.appendChild(li);
-        });
+    initSidebarMenu() {
+        const container = document.getElementById('menuAccordion');
+        const searchInput = document.getElementById('menuSearch');
+        if (!container || !searchInput || typeof PROFILE_DB === 'undefined') return;
+
+        const allProvinces = PROFILE_DB.provinces;
+        const currentProvinceName = this.currentProvince?.name || '';
+        const originalTexts = new Map();
+        let loopEnabled = false;
+        let originalHeight = 0;
+
+        const buildHtml = (provinces, isClone) => {
+            return provinces.map((province, pIdx) => {
+                const isActive = province.name === currentProvinceName ? 'active' : '';
+                const buildings = province.buildings || [];
+                const loopAttr = isClone ? 'data-loop="clone"' : '';
+
+                const links = buildings.map(b => {
+                    const href = `./building.html?name=${encodeURIComponent(b.name)}&province=${encodeURIComponent(province.name)}`;
+                    return `<a href="${href}" class="accordion-link" data-pidx="${pIdx}" data-name="${b.name}">${b.name}</a>`;
+                }).join('');
+
+                return `
+                    <div class="accordion-item ${isActive}" data-pidx="${pIdx}" data-pname="${province.name}" ${loopAttr}>
+                        <a href="./profile.html?province=${encodeURIComponent(province.name)}" class="accordion-header" data-pidx="${pIdx}">
+                            <span class="header-text">${province.name}</span>
+                        </a>
+                        <div class="accordion-body">${links}</div>
+                    </div>
+                `;
+            }).join('');
+        };
+
+        const render = (items, isSearch = false) => {
+            if (!items || items.length === 0) {
+                container.innerHTML = '<div class="menu-no-result">未找到匹配结果</div>';
+                loopEnabled = false;
+                return;
+            }
+
+            if (!isSearch && items.length === allProvinces.length) {
+                container.innerHTML = buildHtml(items, false) + buildHtml(items, true);
+                loopEnabled = true;
+                requestAnimationFrame(() => {
+                    originalHeight = container.scrollHeight / 2;
+                });
+            } else {
+                container.innerHTML = buildHtml(items, false);
+                loopEnabled = false;
+            }
+
+            container.querySelectorAll('.header-text, .accordion-link').forEach(el => {
+                originalTexts.set(el, el.textContent);
+            });
+
+            bindAccordion();
+        };
+
+        const doExpand = (pname, willBeActive) => {
+            // 手风琴：非搜索状态下收起其他省份
+            if (!searchInput.value.trim()) {
+                container.querySelectorAll('.accordion-item').forEach(i => {
+                    if (i.dataset.pname !== pname) i.classList.remove('active');
+                });
+            }
+            // 同步展开/收起所有同名项（含克隆体）
+            container.querySelectorAll(`[data-pname="${pname}"]`).forEach(i => {
+                i.classList.toggle('active', willBeActive);
+            });
+            if (loopEnabled) {
+                requestAnimationFrame(() => {
+                    originalHeight = container.scrollHeight / 2;
+                });
+            }
+        };
+
+        const bindAccordion = () => {
+            container.querySelectorAll('.accordion-header').forEach(header => {
+                header.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    const href = header.getAttribute('href');
+                    const pname = header.closest('.accordion-item').dataset.pname;
+                    const item = header.closest('.accordion-item');
+                    const isActive = item.classList.contains('active');
+                    const willBeActive = !isActive;
+
+                    const urlParams = new URLSearchParams(window.location.search);
+                    const currentPageProvince = urlParams.get('province');
+                    const isProfilePage = window.location.pathname.includes('profile.html');
+                    const isCurrentProvince = isProfilePage && currentPageProvince === pname;
+
+                    // 1. 先滚动到目标省份置顶（只向下滚，不回滚）
+                    const allItems = container.querySelectorAll(`[data-pname="${pname}"]`);
+                    const containerRect = container.getBoundingClientRect();
+                    let targetEl = null;
+                    let minDist = Infinity;
+
+                    allItems.forEach(el => {
+                        const rect = el.getBoundingClientRect();
+                        const dist = rect.top - containerRect.top;
+                        // 只选在分界线下方或刚好贴线的
+                        if (dist >= -2 && dist < minDist) {
+                            minDist = dist;
+                            targetEl = el;
+                        }
+                    });
+                    // 如果都在上方，取克隆体（最后一份，在下方）
+                    if (!targetEl) {
+                        targetEl = allItems[allItems.length - 1];
+                    }
+
+                    const scrollOffset = targetEl.getBoundingClientRect().top - containerRect.top + container.scrollTop;
+
+                    // 临时禁用循环监听，避免 smooth 被干扰
+                    container.removeEventListener('scroll', handleLoopScroll, { passive: true });
+                    container.scrollTo({ top: scrollOffset, behavior: 'smooth' });
+
+                    // 2. 滚动动画完成后（350ms），再展开/收起
+                    //    这样展开只向下推，收起发生在上方（屏幕外），不会"向上挤压"
+                    setTimeout(() => {
+                        doExpand(pname, willBeActive);
+                        container.addEventListener('scroll', handleLoopScroll, { passive: true });
+
+                        // 3. 如果是其他省份，跳转大厅
+                        if (!isCurrentProvince) {
+                            window.location.href = href;
+                        }
+                    }, 350);
+                });
+            });
+        };
+
+        const handleLoopScroll = () => {
+            if (!loopEnabled || !originalHeight) return;
+            const st = container.scrollTop;
+            if (st >= originalHeight) {
+                container.scrollTop = st - originalHeight;
+            } else if (st < 0) {
+                container.scrollTop = st + originalHeight;
+            }
+        };
+
+        container.addEventListener('scroll', handleLoopScroll, { passive: true });
+
+        const escapeRegex = (str) => str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
+        const filter = (keyword) => {
+            if (!keyword) {
+                render(allProvinces, false);
+                const current = container.querySelector(`[data-pname="${currentProvinceName}"]:not([data-loop])`);
+                if (current) current.classList.add('active');
+                const noResult = container.querySelector('.menu-no-result');
+                if (noResult) noResult.remove();
+                return;
+            }
+
+            const lowerK = keyword.toLowerCase();
+            let hasAnyMatch = false;
+
+            allProvinces.forEach((province, pIdx) => {
+                const item = container.querySelector(`.accordion-item[data-pidx="${pIdx}"]:not([data-loop])`);
+                if (!item) return;
+
+                const headerText = item.querySelector('.header-text');
+                const links = item.querySelectorAll('.accordion-link');
+
+                const pMatch = province.name.toLowerCase().includes(lowerK);
+                let bMatchCount = 0;
+
+                links.forEach(link => {
+                    const bName = link.dataset.name.toLowerCase();
+                    if (bName.includes(lowerK)) {
+                        link.style.display = '';
+                        bMatchCount++;
+                        const orig = originalTexts.get(link);
+                        if (orig) {
+                            const regex = new RegExp(`(${escapeRegex(keyword)})`, 'gi');
+                            link.innerHTML = orig.replace(regex, '<span class="highlight-text">$1</span>');
+                        }
+                    } else {
+                        link.style.display = 'none';
+                        if (originalTexts.has(link)) link.textContent = originalTexts.get(link);
+                    }
+                });
+
+                if (pMatch || bMatchCount > 0) {
+                    item.style.display = '';
+                    item.classList.add('active');
+                    hasAnyMatch = true;
+
+                    if (pMatch) {
+                        const orig = originalTexts.get(headerText);
+                        if (orig) {
+                            const regex = new RegExp(`(${escapeRegex(keyword)})`, 'gi');
+                            headerText.innerHTML = orig.replace(regex, '<span class="highlight-text">$1</span>');
+                        }
+                    } else {
+                        if (originalTexts.has(headerText)) headerText.textContent = originalTexts.get(headerText);
+                    }
+                } else {
+                    item.style.display = 'none';
+                }
+            });
+
+            let noResult = container.querySelector('.menu-no-result');
+            if (!noResult) {
+                noResult = document.createElement('div');
+                noResult.className = 'menu-no-result';
+                noResult.textContent = '未找到匹配结果';
+                container.appendChild(noResult);
+            }
+            noResult.style.display = hasAnyMatch ? 'none' : 'block';
+        };
+
+        render(allProvinces, false);
+        searchInput.addEventListener('input', (e) => filter(e.target.value.trim()));
+
+        const current = container.querySelector(`[data-pname="${currentProvinceName}"]:not([data-loop])`);
+        if (current) current.classList.add('active');
     },
 
     initParticles() {

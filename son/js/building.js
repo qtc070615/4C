@@ -15,11 +15,10 @@ const BuildingApp = {
             return;
         }
 
-        // 直接读取全局变量 BUILDING_DB 和 PROFILE_DB（由 building-data.js 和 profile-data.js 提供）
         this.loadBuildingData(buildingName);
         this.loadProvinceData(provinceName);
         
-        this.initBuildingList();
+        this.initSidebarMenu();
         this.initParticles();
         this.initImmersiveMode();
         this.initCompactNav();
@@ -33,7 +32,6 @@ const BuildingApp = {
 
     loadBuildingData(buildingName) {
         try {
-            // 直接读取全局变量（无需网络请求）
             const data = BUILDING_DB;
             this.data.currentBuilding = data.buildings.find(b => b.name === buildingName);
             
@@ -64,13 +62,11 @@ const BuildingApp = {
             document.getElementById('immersiveImage').src = imgPath;
             document.getElementById('immersiveImage').alt = b.name;
 
-            // 加载地图图片 - 修复：改为.png后缀，添加容错
-            const mapPath = `../img/map/${b.name}_map.png`;  // ← 修复：jpg改为png
+            const mapPath = `../img/map/${b.name}_map.png`;
             const mapImg = document.getElementById('mapImage');
             if (mapImg) {
                 mapImg.src = mapPath;
                 mapImg.alt = `${b.name}位置地图`;
-                // 加载失败时显示提示
                 mapImg.onerror = function() {
                     this.style.display = 'none';
                     this.parentElement.innerHTML = '<div style="color:#666; text-align:center; padding:20px; font-size:14px;">地图加载中...</div>';
@@ -89,7 +85,6 @@ const BuildingApp = {
 
     loadProvinceData(provinceName) {
         try {
-            // 直接读取全局变量
             const data = PROFILE_DB;
             const province = data.provinces.find(p => p.name === provinceName);
             
@@ -97,11 +92,9 @@ const BuildingApp = {
                 this.data.currentProvince = province;
                 this.data.provinceBuildings = province.buildings;
                 
-                document.getElementById('sidebarProvince').textContent = province.name;
                 document.getElementById('crumbProvince').textContent = province.name;
                 
                 const hallUrl = `./profile.html?province=${encodeURIComponent(province.name)}`;
-                document.getElementById('hallLink').href = hallUrl;
                 document.getElementById('backToHall').href = hallUrl;
                 document.getElementById('crumbProvince').href = hallUrl;
             }
@@ -110,26 +103,210 @@ const BuildingApp = {
         }
     },
 
-    initBuildingList() {
-        const container = document.getElementById('buildingListContainer');
-        if (!container) return;
+    initSidebarMenu() {
+        const container = document.getElementById('menuAccordion');
+        const searchInput = document.getElementById('menuSearch');
+        if (!container || !searchInput || typeof PROFILE_DB === 'undefined') return;
 
-        const currentName = this.data.currentBuilding?.name;
-        const buildings = this.data.provinceBuildings;
+        const allProvinces = PROFILE_DB.provinces;
+        const currentProvinceName = this.data.currentProvince?.name || '';
+        const currentBuildingName = this.data.currentBuilding?.name || '';
+        const originalTexts = new Map();
+        let loopEnabled = false;
+        let originalHeight = 0;
 
-        container.innerHTML = '';
+        const buildHtml = (provinces, isClone) => {
+            return provinces.map((province, pIdx) => {
+                const isActive = province.name === currentProvinceName ? 'active' : '';
+                const buildings = province.buildings || [];
+                const loopAttr = isClone ? 'data-loop="clone"' : '';
 
-        buildings.forEach(b => {
-            const li = document.createElement('li');
-            li.className = 'building-item';
+                const links = buildings.map(b => {
+                    const isCurrent = b.name === currentBuildingName;
+                    const href = `./building.html?name=${encodeURIComponent(b.name)}&province=${encodeURIComponent(province.name)}`;
+                    return `<a href="${href}" class="accordion-link ${isCurrent ? 'current' : ''}" data-pidx="${pIdx}" data-name="${b.name}">${b.name}</a>`;
+                }).join('');
 
-            const isActive = b.name === currentName;
-            const linkClass = isActive ? 'building-link active' : 'building-link';
-            const href = isActive ? '#' : `./building.html?name=${encodeURIComponent(b.name)}&province=${encodeURIComponent(this.data.currentProvince.name)}`;
+                return `
+                    <div class="accordion-item ${isActive}" data-pidx="${pIdx}" data-pname="${province.name}" ${loopAttr}>
+                        <a href="./profile.html?province=${encodeURIComponent(province.name)}" class="accordion-header" data-pidx="${pIdx}">
+                            <span class="header-text">${province.name}</span>
+                        </a>
+                        <div class="accordion-body">${links}</div>
+                    </div>
+                `;
+            }).join('');
+        };
 
-            li.innerHTML = `<a href="${href}" class="${linkClass}" ${isActive ? 'onclick="return false;"' : ''}>${b.name}</a>`;
-            container.appendChild(li);
-        });
+        const render = (items, isSearch = false) => {
+            if (!items || items.length === 0) {
+                container.innerHTML = '<div class="menu-no-result">未找到匹配结果</div>';
+                loopEnabled = false;
+                return;
+            }
+
+            if (!isSearch && items.length === allProvinces.length) {
+                container.innerHTML = buildHtml(items, false) + buildHtml(items, true);
+                loopEnabled = true;
+                requestAnimationFrame(() => {
+                    originalHeight = container.scrollHeight / 2;
+                });
+            } else {
+                container.innerHTML = buildHtml(items, false);
+                loopEnabled = false;
+            }
+
+            container.querySelectorAll('.header-text, .accordion-link').forEach(el => {
+                originalTexts.set(el, el.textContent);
+            });
+
+            bindAccordion();
+        };
+
+        const doExpand = (pname, willBeActive) => {
+            if (!searchInput.value.trim()) {
+                container.querySelectorAll('.accordion-item').forEach(i => {
+                    if (i.dataset.pname !== pname) i.classList.remove('active');
+                });
+            }
+            container.querySelectorAll(`[data-pname="${pname}"]`).forEach(i => {
+                i.classList.toggle('active', willBeActive);
+            });
+            if (loopEnabled) {
+                requestAnimationFrame(() => {
+                    originalHeight = container.scrollHeight / 2;
+                });
+            }
+        };
+
+        const bindAccordion = () => {
+            container.querySelectorAll('.accordion-header').forEach(header => {
+                header.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    const href = header.getAttribute('href');
+                    const pname = header.closest('.accordion-item').dataset.pname;
+                    const item = header.closest('.accordion-item');
+                    const isActive = item.classList.contains('active');
+                    const willBeActive = !isActive;
+
+                    // 建筑页：点击任何省份都先滚动展开，再跳转大厅
+                    const allItems = container.querySelectorAll(`[data-pname="${pname}"]`);
+                    const containerRect = container.getBoundingClientRect();
+                    let targetEl = null;
+                    let minDist = Infinity;
+
+                    allItems.forEach(el => {
+                        const rect = el.getBoundingClientRect();
+                        const dist = rect.top - containerRect.top;
+                        if (dist >= -2 && dist < minDist) {
+                            minDist = dist;
+                            targetEl = el;
+                        }
+                    });
+                    if (!targetEl) targetEl = allItems[allItems.length - 1];
+
+                    const scrollOffset = targetEl.getBoundingClientRect().top - containerRect.top + container.scrollTop;
+
+                    container.removeEventListener('scroll', handleLoopScroll, { passive: true });
+                    container.scrollTo({ top: scrollOffset, behavior: 'smooth' });
+
+                    setTimeout(() => {
+                        doExpand(pname, willBeActive);
+                        container.addEventListener('scroll', handleLoopScroll, { passive: true });
+                        // 建筑页点击任何省份都跳转大厅
+                        window.location.href = href;
+                    }, 350);
+                });
+            });
+        };
+
+        const handleLoopScroll = () => {
+            if (!loopEnabled || !originalHeight) return;
+            const st = container.scrollTop;
+            if (st >= originalHeight) {
+                container.scrollTop = st - originalHeight;
+            } else if (st < 0) {
+                container.scrollTop = st + originalHeight;
+            }
+        };
+
+        container.addEventListener('scroll', handleLoopScroll, { passive: true });
+
+        const escapeRegex = (str) => str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
+        const filter = (keyword) => {
+            if (!keyword) {
+                render(allProvinces, false);
+                const current = container.querySelector(`[data-pname="${currentProvinceName}"]:not([data-loop])`);
+                if (current) current.classList.add('active');
+                const noResult = container.querySelector('.menu-no-result');
+                if (noResult) noResult.remove();
+                return;
+            }
+
+            const lowerK = keyword.toLowerCase();
+            let hasAnyMatch = false;
+
+            allProvinces.forEach((province, pIdx) => {
+                const item = container.querySelector(`.accordion-item[data-pidx="${pIdx}"]:not([data-loop])`);
+                if (!item) return;
+
+                const headerText = item.querySelector('.header-text');
+                const links = item.querySelectorAll('.accordion-link');
+
+                const pMatch = province.name.toLowerCase().includes(lowerK);
+                let bMatchCount = 0;
+
+                links.forEach(link => {
+                    const bName = link.dataset.name.toLowerCase();
+                    if (bName.includes(lowerK)) {
+                        link.style.display = '';
+                        bMatchCount++;
+                        const orig = originalTexts.get(link);
+                        if (orig) {
+                            const regex = new RegExp(`(${escapeRegex(keyword)})`, 'gi');
+                            link.innerHTML = orig.replace(regex, '<span class="highlight-text">$1</span>');
+                        }
+                    } else {
+                        link.style.display = 'none';
+                        if (originalTexts.has(link)) link.textContent = originalTexts.get(link);
+                    }
+                });
+
+                if (pMatch || bMatchCount > 0) {
+                    item.style.display = '';
+                    item.classList.add('active');
+                    hasAnyMatch = true;
+
+                    if (pMatch) {
+                        const orig = originalTexts.get(headerText);
+                        if (orig) {
+                            const regex = new RegExp(`(${escapeRegex(keyword)})`, 'gi');
+                            headerText.innerHTML = orig.replace(regex, '<span class="highlight-text">$1</span>');
+                        }
+                    } else {
+                        if (originalTexts.has(headerText)) headerText.textContent = originalTexts.get(headerText);
+                    }
+                } else {
+                    item.style.display = 'none';
+                }
+            });
+
+            let noResult = container.querySelector('.menu-no-result');
+            if (!noResult) {
+                noResult = document.createElement('div');
+                noResult.className = 'menu-no-result';
+                noResult.textContent = '未找到匹配结果';
+                container.appendChild(noResult);
+            }
+            noResult.style.display = hasAnyMatch ? 'none' : 'block';
+        };
+
+        render(allProvinces, false);
+        searchInput.addEventListener('input', (e) => filter(e.target.value.trim()));
+
+        const current = container.querySelector(`[data-pname="${currentProvinceName}"]:not([data-loop])`);
+        if (current) current.classList.add('active');
     },
 
     initParticles() {
@@ -165,10 +342,7 @@ const BuildingApp = {
             });
         }
 
-        // 【修改】沉浸模式全屏点击退出（取代原来的仅提示框点击）
-        // 提示框本身 pointer-events: none，点击会直接冒泡到 immersiveMode 容器
         immersiveMode.addEventListener('click', (e) => {
-            // 无论点击哪里（图片、文字、空白处）都退出沉浸模式
             if (this.data.isImmersive) {
                 this.exitImmersiveMode();
             }

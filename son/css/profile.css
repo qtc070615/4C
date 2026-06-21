@@ -702,3 +702,176 @@ body {
         font-size: 13px;
     }
 }
+
+/* ========== 侧边栏手风琴菜单 ========== */
+
+.menu-search-box {
+    position: relative;
+    padding: 20px;
+}
+
+.menu-search-box input {
+    width: 100%;
+    padding: 10px 35px 10px 15px;
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(212, 175, 55, 0.25);
+    border-radius: 4px;
+    color: #e8e8e8;
+    font-family: 'Noto Serif SC', serif;
+    font-size: 14px;
+    outline: none;
+    transition: all 0.3s ease;
+    box-sizing: border-box;
+}
+
+.menu-search-box input:focus {
+    border-color: #D4AF37;
+    background: rgba(212, 175, 55, 0.06);
+    box-shadow: 0 0 0 3px rgba(212, 175, 55, 0.1);
+}
+
+.menu-search-box input::placeholder {
+    color: rgba(232, 232, 232, 0.35);
+}
+
+.search-icon {
+    position: absolute;
+    right: 30px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 16px;
+    height: 16px;
+    color: rgba(212, 175, 55, 0.6);
+    pointer-events: none;
+}
+
+.menu-accordion {
+    flex: 1;
+    overflow-y: auto;
+    overflow-x: hidden;
+    padding: 10px 15px;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+}
+
+.menu-accordion::-webkit-scrollbar {
+    display: none;
+}
+
+.accordion-item {
+    margin-bottom: 6px;
+}
+
+.accordion-header {
+    text-decoration: none;
+    display: block;
+    padding: 14px 15px;
+    color: #D4AF37;
+    text-decoration: none;
+    border-left: 2px solid transparent;
+    transition: all 0.3s;
+    font-size: 16px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    border-radius: 0 4px 4px 0;
+    cursor: pointer;
+    font-family: 'Noto Serif SC', serif;
+    position: relative;
+    font-weight: 500;
+}
+
+.accordion-header:hover {
+    color: #D4AF37;
+    border-left-color: #D4AF37;
+    background: rgba(212, 175, 55, 0.08);
+}
+
+.accordion-item.active .accordion-header {
+    color: #D4AF37;
+    border-left-color: #D4AF37;
+    background: rgba(212, 175, 55, 0.15);
+    font-weight: bold;
+}
+
+.accordion-body {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.accordion-item.active .accordion-body {
+    max-height: 600px;
+}
+
+.accordion-link {
+    display: block;
+    padding: 10px 15px 10px 30px;
+    color: rgba(224, 224, 224, 0.6);
+    text-decoration: none;
+    font-family: 'Noto Serif SC', serif;
+    font-size: 14px;
+    transition: all 0.3s;
+    border-left: 2px solid transparent;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    position: relative;
+}
+
+.accordion-link::before {
+    content: '';
+    position: absolute;
+    left: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+    background: rgba(212, 175, 55, 0.4);
+    transition: all 0.2s ease;
+}
+
+.accordion-link:hover {
+    color: #D4AF37;
+    background: rgba(212, 175, 55, 0.08);
+    border-left-color: #D4AF37;
+    padding-left: 34px;
+}
+
+.accordion-link:hover::before {
+    background: #D4AF37;
+    box-shadow: 0 0 6px rgba(212, 175, 55, 0.4);
+}
+
+.accordion-link.current {
+    color: #D4AF37;
+    background: rgba(212, 175, 55, 0.15);
+    font-weight: bold;
+    border-left-color: #D4AF37;
+}
+
+.accordion-link.current::before {
+    background: #D4AF37;
+    box-shadow: 0 0 8px rgba(212, 175, 55, 0.6);
+}
+
+.highlight-text {
+    color: #fff;
+    font-weight: bold;
+    text-shadow: 0 0 10px rgba(212, 175, 55, 0.5);
+}
+
+.menu-no-result {
+    padding: 40px 20px;
+    text-align: center;
+    color: rgba(224, 224, 224, 0.3);
+    font-family: 'Noto Serif SC', serif;
+    font-size: 14px;
+}
+
+@media (max-width: 1000px) {
+    .menu-search-box { padding: 15px; }
+    .accordion-header { padding: 16px 18px; font-size: 18px; }
+    .accordion-link { padding: 12px 15px 12px 30px; font-size: 15px; }
+}
