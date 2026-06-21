@@ -7,9 +7,15 @@ const BuildingApp = {
     },
 
     init() {
+        // 读取之前保存的菜单状态
+        const saved = sessionStorage.getItem('menuState');
+        if (saved) {
+            try { this._pendingMenuState = JSON.parse(saved); } catch(e) {}
+            sessionStorage.removeItem('menuState');
+        }
+
         const buildingName = this.getUrlParam('name');
         const provinceName = this.getUrlParam('province');
-
         if (!buildingName || !provinceName) {
             console.error('缺少参数，URL应为: building.html?name=故宫&province=北京');
             return;
@@ -17,20 +23,7 @@ const BuildingApp = {
 
         this.loadBuildingData(buildingName);
         this.loadProvinceData(provinceName);
-        
-        const menuContainer = document.getElementById('menuAccordion');
-        const isMenuReady = menuContainer && menuContainer.dataset.initialized === 'true';
-        if (isMenuReady) {
-            this.updateMenuHighlight();
-            const savedScroll = sessionStorage.getItem('menuScroll');
-            if (savedScroll) {
-                menuContainer.scrollTop = parseInt(savedScroll);
-                sessionStorage.removeItem('menuScroll');
-            }
-        } else {
-            this.initSidebarMenu();
-        }
-        
+        this.initSidebarMenu();
         this.initParticles();
         this.initImmersiveMode();
         this.initCompactNav();
@@ -38,41 +31,53 @@ const BuildingApp = {
     },
 
     getUrlParam(name) {
-        const params = new URLSearchParams(window.location.search);
-        return params.get(name);
+        return new URLSearchParams(window.location.search).get(name);
     },
 
     loadBuildingData(buildingName) {
         try {
+            if (typeof BUILDING_DB === 'undefined') {
+                console.error('BUILDING_DB 未定义，请检查 building-data.js 是否引入');
+                return;
+            }
             const data = BUILDING_DB;
             this.data.currentBuilding = data.buildings.find(b => b.name === buildingName);
-            
             if (!this.data.currentBuilding) {
                 console.error('未找到建筑:', buildingName);
                 return;
             }
 
             const b = this.data.currentBuilding;
-
             document.title = b.name;
-            document.getElementById('buildingName').textContent = b.name;
-            document.getElementById('buildingEnName').textContent = b.enName;
-            document.getElementById('buildingPeriod').textContent = b.period;
-            document.getElementById('immersiveBuildingName').textContent = b.name;
-            document.getElementById('immersiveBuildingEnName').textContent = b.enName;
-            document.getElementById('immersivePeriod').textContent = b.period;
-            document.getElementById('crumbBuildingName').textContent = b.name;
-            document.getElementById('tagLevel').textContent = b.level;
-            document.getElementById('tagPeriod').textContent = b.period;
-            
-            document.getElementById('buildingDesc').innerHTML = b.desc;
-            document.getElementById('baiduLink').href = b.baiduLink;
-            
+
+            const setText = (id, text) => {
+                const el = document.getElementById(id);
+                if (el) el.textContent = text;
+            };
+            const setHtml = (id, html) => {
+                const el = document.getElementById(id);
+                if (el) el.innerHTML = html;
+            };
+
+            setText('buildingName', b.name);
+            setText('buildingEnName', b.enName);
+            setText('buildingPeriod', b.period);
+            setText('immersiveBuildingName', b.name);
+            setText('immersiveBuildingEnName', b.enName);
+            setText('immersivePeriod', b.period);
+            setText('crumbBuildingName', b.name);
+            setText('tagLevel', b.level);
+            setText('tagPeriod', b.period);
+            setHtml('buildingDesc', b.desc);
+
+            const baiduLink = document.getElementById('baiduLink');
+            if (baiduLink) baiduLink.href = b.baiduLink;
+
             const imgPath = `../img/${b.image}`;
-            document.getElementById('heroImage').src = imgPath;
-            document.getElementById('heroImage').alt = b.name;
-            document.getElementById('immersiveImage').src = imgPath;
-            document.getElementById('immersiveImage').alt = b.name;
+            const heroImg = document.getElementById('heroImage');
+            const immersiveImg = document.getElementById('immersiveImage');
+            if (heroImg) { heroImg.src = imgPath; heroImg.alt = b.name; }
+            if (immersiveImg) { immersiveImg.src = imgPath; immersiveImg.alt = b.name; }
 
             const mapPath = `../img/map/${b.name}_map.png`;
             const mapImg = document.getElementById('mapImage');
@@ -86,10 +91,11 @@ const BuildingApp = {
             }
 
             const featureList = document.getElementById('featureList');
-            featureList.innerHTML = b.features.map(f => 
-                `<li><strong>${f.title}：</strong>${f.desc}</li>`
-            ).join('');
-
+            if (featureList) {
+                featureList.innerHTML = b.features.map(f => 
+                    `<li><strong>${f.title}：</strong>${f.desc}</li>`
+                ).join('');
+            }
         } catch (error) {
             console.error('加载建筑数据失败:', error);
         }
@@ -97,39 +103,25 @@ const BuildingApp = {
 
     loadProvinceData(provinceName) {
         try {
+            if (typeof PROFILE_DB === 'undefined') {
+                console.error('PROFILE_DB 未定义');
+                return;
+            }
             const data = PROFILE_DB;
             const province = data.provinces.find(p => p.name === provinceName);
-            
             if (province) {
                 this.data.currentProvince = province;
                 this.data.provinceBuildings = province.buildings;
-                
-                document.getElementById('crumbProvince').textContent = province.name;
-                
+                const crumb = document.getElementById('crumbProvince');
+                if (crumb) crumb.textContent = province.name;
                 const hallUrl = `./profile.html?province=${encodeURIComponent(province.name)}`;
-                document.getElementById('backToHall').href = hallUrl;
-                document.getElementById('crumbProvince').href = hallUrl;
+                const backToHall = document.getElementById('backToHall');
+                if (backToHall) backToHall.href = hallUrl;
+                if (crumb) crumb.href = hallUrl;
             }
         } catch (error) {
             console.error('加载省份数据失败:', error);
         }
-    },
-
-    updateMenuHighlight() {
-        const container = document.getElementById('menuAccordion');
-        if (!container || !this.data.currentProvince) return;
-        const currentProvinceName = this.data.currentProvince.name;
-        const currentBuildingName = this.data.currentBuilding?.name || '';
-        
-        container.querySelectorAll('.accordion-item').forEach(i => i.classList.remove('active'));
-        container.querySelectorAll('.accordion-link').forEach(l => l.classList.remove('current'));
-        
-        container.querySelectorAll(`[data-pname="${currentProvinceName}"]`).forEach(i => {
-            i.classList.add('active');
-        });
-        container.querySelectorAll('.accordion-link').forEach(l => {
-            if (l.dataset.name === currentBuildingName) l.classList.add('current');
-        });
     },
 
     initSidebarMenu() {
@@ -149,7 +141,6 @@ const BuildingApp = {
                 const isActive = province.name === currentProvinceName ? 'active' : '';
                 const buildings = province.buildings || [];
                 const loopAttr = isClone ? 'data-loop="clone"' : '';
-
                 const links = buildings.map(b => {
                     const isCurrent = b.name === currentBuildingName;
                     const href = `./building.html?name=${encodeURIComponent(b.name)}&province=${encodeURIComponent(province.name)}`;
@@ -173,23 +164,19 @@ const BuildingApp = {
                 loopEnabled = false;
                 return;
             }
-
             if (!isSearch && items.length === allProvinces.length) {
                 container.innerHTML = buildHtml(items, false) + buildHtml(items, true);
                 loopEnabled = true;
-                requestAnimationFrame(() => {
-                    originalHeight = container.scrollHeight / 2;
-                });
+                requestAnimationFrame(() => { originalHeight = container.scrollHeight / 2; });
             } else {
                 container.innerHTML = buildHtml(items, false);
                 loopEnabled = false;
             }
-
             container.querySelectorAll('.header-text, .accordion-link').forEach(el => {
                 originalTexts.set(el, el.textContent);
             });
-
             bindAccordion();
+            attachSaveState();
         };
 
         const doExpand = (pname, willBeActive) => {
@@ -202,9 +189,7 @@ const BuildingApp = {
                 i.classList.toggle('active', willBeActive);
             });
             if (loopEnabled) {
-                requestAnimationFrame(() => {
-                    originalHeight = container.scrollHeight / 2;
-                });
+                requestAnimationFrame(() => { originalHeight = container.scrollHeight / 2; });
             }
         };
 
@@ -216,28 +201,38 @@ const BuildingApp = {
             }
         };
 
+        const saveMenuState = () => {
+            const activeItem = container.querySelector('.accordion-item.active');
+            sessionStorage.setItem('menuState', JSON.stringify({
+                activeProvince: activeItem?.dataset.pname || '',
+                scrollTop: container.scrollTop,
+                searchValue: searchInput.value
+            }));
+        };
+
+        const attachSaveState = () => {
+            container.querySelectorAll('a').forEach(link => {
+                link.addEventListener('click', saveMenuState);
+            });
+        };
+
         const bindAccordion = () => {
             container.querySelectorAll('.accordion-header').forEach(header => {
                 header.addEventListener('click', (e) => {
                     e.preventDefault();
                     const href = header.getAttribute('href');
                     const pname = header.closest('.accordion-item').dataset.pname;
-                    const item = header.closest('.accordion-item');
-                    const isActive = item.classList.contains('active');
+                    const isActive = header.closest('.accordion-item').classList.contains('active');
                     const willBeActive = !isActive;
 
-                    // 保存滚动位置
-                    sessionStorage.setItem('menuScroll', container.scrollTop);
+                    saveMenuState();
 
-                    // 先滚动到目标省份置顶（只向下滚）
                     const allItems = container.querySelectorAll(`[data-pname="${pname}"]`);
                     const containerRect = container.getBoundingClientRect();
                     let targetEl = null;
                     let minDist = Infinity;
-
                     allItems.forEach(el => {
-                        const rect = el.getBoundingClientRect();
-                        const dist = rect.top - containerRect.top;
+                        const dist = el.getBoundingClientRect().top - containerRect.top;
                         if (dist >= -2 && dist < minDist) {
                             minDist = dist;
                             targetEl = el;
@@ -246,14 +241,12 @@ const BuildingApp = {
                     if (!targetEl) targetEl = allItems[allItems.length - 1];
 
                     const scrollOffset = targetEl.getBoundingClientRect().top - containerRect.top + container.scrollTop;
-
                     container.removeEventListener('scroll', handleLoopScroll, { passive: true });
                     container.scrollTo({ top: scrollOffset, behavior: 'smooth' });
 
                     setTimeout(() => {
                         doExpand(pname, willBeActive);
                         container.addEventListener('scroll', handleLoopScroll, { passive: true });
-                        // 建筑页点击任何省份都跳转大厅
                         turboNavigate(href);
                     }, 350);
                 });
@@ -263,13 +256,9 @@ const BuildingApp = {
         const handleLoopScroll = () => {
             if (!loopEnabled || !originalHeight) return;
             const st = container.scrollTop;
-            if (st >= originalHeight) {
-                container.scrollTop = st - originalHeight;
-            } else if (st < 0) {
-                container.scrollTop = st + originalHeight;
-            }
+            if (st >= originalHeight) container.scrollTop = st - originalHeight;
+            else if (st < 0) container.scrollTop = st + originalHeight;
         };
-
         container.addEventListener('scroll', handleLoopScroll, { passive: true });
 
         const escapeRegex = (str) => str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
@@ -283,17 +272,13 @@ const BuildingApp = {
                 if (noResult) noResult.remove();
                 return;
             }
-
             const lowerK = keyword.toLowerCase();
             let hasAnyMatch = false;
-
             allProvinces.forEach((province, pIdx) => {
                 const item = container.querySelector(`.accordion-item[data-pidx="${pIdx}"]:not([data-loop])`);
                 if (!item) return;
-
                 const headerText = item.querySelector('.header-text');
                 const links = item.querySelectorAll('.accordion-link');
-
                 const pMatch = province.name.toLowerCase().includes(lowerK);
                 let bMatchCount = 0;
 
@@ -317,7 +302,6 @@ const BuildingApp = {
                     item.style.display = '';
                     item.classList.add('active');
                     hasAnyMatch = true;
-
                     if (pMatch) {
                         const orig = originalTexts.get(headerText);
                         if (orig) {
@@ -331,7 +315,6 @@ const BuildingApp = {
                     item.style.display = 'none';
                 }
             });
-
             let noResult = container.querySelector('.menu-no-result');
             if (!noResult) {
                 noResult = document.createElement('div');
@@ -343,20 +326,37 @@ const BuildingApp = {
         };
 
         render(allProvinces, false);
+
+        // 恢复之前保存的状态
+        if (this._pendingMenuState) {
+            const state = this._pendingMenuState;
+            if (state.activeProvince) {
+                if (!state.searchValue) {
+                    container.querySelectorAll('.accordion-item').forEach(i => i.classList.remove('active'));
+                }
+                container.querySelectorAll(`[data-pname="${state.activeProvince}"]`).forEach(i => {
+                    i.classList.add('active');
+                });
+                if (loopEnabled) requestAnimationFrame(() => { originalHeight = container.scrollHeight / 2; });
+            }
+            if (state.searchValue) {
+                searchInput.value = state.searchValue;
+                filter(state.searchValue);
+            }
+            setTimeout(() => { container.scrollTop = state.scrollTop || 0; }, 50);
+            this._pendingMenuState = null;
+        }
+
         searchInput.addEventListener('input', (e) => filter(e.target.value.trim()));
-
         container.dataset.initialized = 'true';
-
-        const current = container.querySelector(`[data-pname="${currentProvinceName}"]:not([data-loop])`);
-        if (current) current.classList.add('active');
     },
 
     initParticles() {
         const container = document.getElementById('particleLayer');
         if (!container) return;
         container.innerHTML = '';
-        const particleCount = window.innerWidth < 1000 ? 15 : 30;
-        for (let i = 0; i < particleCount; i++) {
+        const count = window.innerWidth < 1000 ? 15 : 30;
+        for (let i = 0; i < count; i++) {
             const p = document.createElement('div');
             p.className = 'particle';
             p.style.left = Math.random() * 100 + '%';
@@ -368,11 +368,9 @@ const BuildingApp = {
 
     initImmersiveMode() {
         if (window.innerWidth <= 1000) return;
-
         const mainContent = document.getElementById('mainContent');
         const immersiveMode = document.getElementById('immersiveMode');
         const heroContainer = document.getElementById('heroContainer');
-
         if (!mainContent || !immersiveMode) return;
 
         if (heroContainer) {
@@ -383,38 +381,30 @@ const BuildingApp = {
                 }
             });
         }
-
-        immersiveMode.addEventListener('click', (e) => {
-            if (this.data.isImmersive) {
-                this.exitImmersiveMode();
-            }
+        immersiveMode.addEventListener('click', () => {
+            if (this.data.isImmersive) this.exitImmersiveMode();
         });
     },
 
     enterImmersiveMode() {
         if (this.data.isImmersive) return;
         this.data.isImmersive = true;
-
         const mainContent = document.getElementById('mainContent');
         const immersiveMode = document.getElementById('immersiveMode');
         const sidebar = document.getElementById('sidebar');
 
         if (sidebar) sidebar.style.transform = 'translateX(-100%)';
-
         if (mainContent) {
             mainContent.style.transition = 'transform 0.6s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.5s ease';
             mainContent.style.transform = 'scale(0.92) translateY(30px)';
             mainContent.style.opacity = '0';
         }
-
         if (immersiveMode) {
             immersiveMode.style.display = 'block';
             immersiveMode.style.opacity = '0';
             immersiveMode.style.transform = 'scale(1.08)';
             immersiveMode.style.transition = 'opacity 0.7s ease, transform 0.7s cubic-bezier(0.4, 0, 0.2, 1)';
-
             immersiveMode.offsetHeight;
-
             setTimeout(() => {
                 immersiveMode.classList.add('active');
                 immersiveMode.style.opacity = '1';
@@ -426,7 +416,6 @@ const BuildingApp = {
     exitImmersiveMode() {
         if (!this.data.isImmersive) return;
         this.data.isImmersive = false;
-
         const mainContent = document.getElementById('mainContent');
         const immersiveMode = document.getElementById('immersiveMode');
         const sidebar = document.getElementById('sidebar');
@@ -436,14 +425,12 @@ const BuildingApp = {
             immersiveMode.style.transform = 'scale(1.05)';
             immersiveMode.classList.remove('active');
         }
-
         setTimeout(() => {
             if (mainContent) {
                 mainContent.style.transform = 'scale(1) translateY(0)';
                 mainContent.style.opacity = '1';
             }
             if (sidebar) sidebar.style.transform = '';
-
             setTimeout(() => {
                 if (mainContent) {
                     mainContent.style.transition = '';
@@ -464,12 +451,10 @@ const BuildingApp = {
         const heroContainer = document.getElementById('heroContainer');
         const compactNav = document.getElementById('compactNav');
         const topBar = document.querySelector('.top-bar');
-
         if (!mainContent || !heroContainer || !compactNav) return;
 
         const buildingName = document.getElementById('buildingName')?.textContent || '';
         const buildingPeriod = document.getElementById('buildingPeriod')?.textContent || '';
-        
         const navTitle = compactNav.querySelector('.nav-title');
         const navPeriod = compactNav.querySelector('.nav-period');
         if (navTitle) navTitle.textContent = buildingName;
@@ -478,7 +463,6 @@ const BuildingApp = {
         mainContent.addEventListener('scroll', () => {
             const heroHeight = heroContainer.offsetHeight;
             const scrollTop = mainContent.scrollTop;
-
             if (scrollTop > heroHeight * 0.8) {
                 compactNav.classList.add('visible');
                 if (topBar) topBar.classList.add('fade-out');
@@ -493,14 +477,12 @@ const BuildingApp = {
         const mobileToggle = document.getElementById('mobileToggle');
         const sidebar = document.getElementById('sidebar');
         const overlay = document.getElementById('sidebarOverlay');
-
         if (mobileToggle && sidebar) {
             mobileToggle.addEventListener('click', () => {
                 sidebar.classList.toggle('open');
                 mobileToggle.classList.toggle('hidden');
             });
         }
-
         if (overlay && sidebar && mobileToggle) {
             overlay.addEventListener('click', () => {
                 sidebar.classList.remove('open');
@@ -510,8 +492,6 @@ const BuildingApp = {
     }
 };
 
-const init = () => {
-    BuildingApp.init();
-};
+const init = () => { BuildingApp.init(); };
 document.addEventListener('DOMContentLoaded', init);
 document.addEventListener('turbo:load', init);
