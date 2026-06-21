@@ -34,11 +34,17 @@ const App = {
         
         this.lastWidth = window.innerWidth;
         
-        // Turbo 导航后菜单已存在（permanent），只更新高亮
+        // 判断菜单是否已经初始化（Turbo 保留的 DOM 会带这个标记）
         const menuContainer = document.getElementById('menuAccordion');
-        const isMenuReady = menuContainer && menuContainer.children.length > 0 && !menuContainer.querySelector('.menu-no-result');
+        const isMenuReady = menuContainer && menuContainer.dataset.initialized === 'true';
         if (isMenuReady) {
             this.updateMenuHighlight();
+            // Turbo 有时不保留滚动位置，用 sessionStorage 兜底恢复
+            const savedScroll = sessionStorage.getItem('menuScroll');
+            if (savedScroll) {
+                menuContainer.scrollTop = parseInt(savedScroll);
+                sessionStorage.removeItem('menuScroll');
+            }
         } else {
             this.initSidebarMenu();
         }
@@ -140,6 +146,7 @@ const App = {
         if (!container || !this.currentProvince) return;
         const currentProvinceName = this.currentProvince.name;
         
+        // 清除所有 active，只保留当前省份
         container.querySelectorAll('.accordion-item').forEach(i => i.classList.remove('active'));
         container.querySelectorAll(`[data-pname="${currentProvinceName}"]`).forEach(i => {
             i.classList.add('active');
@@ -220,6 +227,15 @@ const App = {
             }
         };
 
+        // Turbo 导航辅助函数
+        const turboNavigate = (href) => {
+            if (typeof window.Turbo !== 'undefined' && window.Turbo.visit) {
+                window.Turbo.visit(href);
+            } else {
+                window.location.href = href;
+            }
+        };
+
         const bindAccordion = () => {
             container.querySelectorAll('.accordion-header').forEach(header => {
                 header.addEventListener('click', (e) => {
@@ -235,6 +251,10 @@ const App = {
                     const isProfilePage = window.location.pathname.includes('profile.html');
                     const isCurrentProvince = isProfilePage && currentPageProvince === pname;
 
+                    // 保存当前滚动位置，供跳转后恢复
+                    sessionStorage.setItem('menuScroll', container.scrollTop);
+
+                    // 先滚动到目标省份置顶（只向下滚）
                     const allItems = container.querySelectorAll(`[data-pname="${pname}"]`);
                     const containerRect = container.getBoundingClientRect();
                     let targetEl = null;
@@ -259,8 +279,9 @@ const App = {
                         doExpand(pname, willBeActive);
                         container.addEventListener('scroll', handleLoopScroll, { passive: true });
 
+                        // 如果不是当前省份，用 Turbo 跳转（无刷新）
                         if (!isCurrentProvince) {
-                            window.location.href = href;
+                            turboNavigate(href);
                         }
                     }, 350);
                 });
@@ -351,6 +372,9 @@ const App = {
 
         render(allProvinces, false);
         searchInput.addEventListener('input', (e) => filter(e.target.value.trim()));
+
+        // 标记已初始化，防止 Turbo 导航时重复渲染
+        container.dataset.initialized = 'true';
 
         const current = container.querySelector(`[data-pname="${currentProvinceName}"]:not([data-loop])`);
         if (current) current.classList.add('active');

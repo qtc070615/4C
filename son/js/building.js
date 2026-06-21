@@ -19,9 +19,14 @@ const BuildingApp = {
         this.loadProvinceData(provinceName);
         
         const menuContainer = document.getElementById('menuAccordion');
-        const isMenuReady = menuContainer && menuContainer.children.length > 0 && !menuContainer.querySelector('.menu-no-result');
+        const isMenuReady = menuContainer && menuContainer.dataset.initialized === 'true';
         if (isMenuReady) {
             this.updateMenuHighlight();
+            const savedScroll = sessionStorage.getItem('menuScroll');
+            if (savedScroll) {
+                menuContainer.scrollTop = parseInt(savedScroll);
+                sessionStorage.removeItem('menuScroll');
+            }
         } else {
             this.initSidebarMenu();
         }
@@ -203,6 +208,14 @@ const BuildingApp = {
             }
         };
 
+        const turboNavigate = (href) => {
+            if (typeof window.Turbo !== 'undefined' && window.Turbo.visit) {
+                window.Turbo.visit(href);
+            } else {
+                window.location.href = href;
+            }
+        };
+
         const bindAccordion = () => {
             container.querySelectorAll('.accordion-header').forEach(header => {
                 header.addEventListener('click', (e) => {
@@ -213,6 +226,10 @@ const BuildingApp = {
                     const isActive = item.classList.contains('active');
                     const willBeActive = !isActive;
 
+                    // 保存滚动位置
+                    sessionStorage.setItem('menuScroll', container.scrollTop);
+
+                    // 先滚动到目标省份置顶（只向下滚）
                     const allItems = container.querySelectorAll(`[data-pname="${pname}"]`);
                     const containerRect = container.getBoundingClientRect();
                     let targetEl = null;
@@ -236,7 +253,8 @@ const BuildingApp = {
                     setTimeout(() => {
                         doExpand(pname, willBeActive);
                         container.addEventListener('scroll', handleLoopScroll, { passive: true });
-                        window.location.href = href;
+                        // 建筑页点击任何省份都跳转大厅
+                        turboNavigate(href);
                     }, 350);
                 });
             });
@@ -326,6 +344,8 @@ const BuildingApp = {
 
         render(allProvinces, false);
         searchInput.addEventListener('input', (e) => filter(e.target.value.trim()));
+
+        container.dataset.initialized = 'true';
 
         const current = container.querySelector(`[data-pname="${currentProvinceName}"]:not([data-loop])`);
         if (current) current.classList.add('active');
