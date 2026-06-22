@@ -4,29 +4,24 @@ function initParticles() {
     
     container.innerHTML = '';
     
-    // 50个粒子，4px大小，但发光更强
     for (let i = 0; i < 50; i++) {
         const p = document.createElement('div');
         p.className = 'particle';
         p.style.left = Math.random() * 100 + '%';
         p.style.bottom = '-5px';
         
-        // 动画时间：6-10秒
         const duration = 6 + Math.random() * 4;
         p.style.animationDuration = duration + 's';
         p.style.animationDelay = Math.random() * 6 + 's';
         
-        // 尺寸固定4px
         p.style.width = '4px';
         p.style.height = '4px';
         
-        // 发光加强：半径8-12px，透明度0.95，多层发光
         const glowSize = 8 + Math.random() * 4;
         p.style.boxShadow = `
             0 0 ${glowSize}px ${glowSize/2}px rgba(212, 175, 55, 0.95),
             0 0 ${glowSize*2}px ${glowSize}px rgba(212, 175, 55, 0.5)
         `;
-        // 更亮的中心颜色
         p.style.background = '#FFD700';
         
         container.appendChild(p);
@@ -71,9 +66,21 @@ function initCharts() {
     });
 }
 
+/* ==================== 类型按钮跳转 ==================== */
+function initTypeButtons() {
+    const buttons = document.querySelectorAll('.type-btn');
+    buttons.forEach(btn => {
+        btn.addEventListener('click', function() {
+            const type = this.dataset.type;
+            window.location.href = `../../../son/html/type-hall.html?type=${encodeURIComponent(type)}`;
+        });
+    });
+}
+
 document.addEventListener('DOMContentLoaded', () => {
     initParticles();
     initCharts();
+    initTypeButtons();
 });
 
 window.addEventListener('resize', () => {

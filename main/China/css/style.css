@@ -79,9 +79,12 @@ html, body {
 /* 标题 - padding减小 */
 .header {
     text-align: center;
-    padding: clamp(8px, 1.5vh, 15px) 0 clamp(4px, 1vh, 8px); /* 上下都减小 */
+    padding: clamp(8px, 1.5vh, 15px) 0 clamp(8px, 1.5vh, 15px);
     border-bottom: 1px solid var(--gold-dim);
     flex-shrink: 0;
+    display: flex;           /* 新增 */
+    flex-direction: column;  /* 新增 */
+    align-items: center;     /* 新增 */
 }
 
 .main-title {
@@ -234,4 +237,141 @@ html, body {
     #c4 { grid-column: 3; grid-row: 2; }
     #c5 { grid-column: 3; grid-row: 3; }
     #c6 { grid-column: 3; grid-row: 4; }
+}
+/* ========== 顶部标题 + 类型筛选按钮（横排分散版） ========== */
+.header {
+    text-align: center;
+    padding: clamp(10px, 1.8vh, 20px) clamp(20px, 3vw, 60px);
+    border-bottom: 1px solid var(--gold-dim);
+    flex-shrink: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: clamp(6px, 1vh, 12px);
+}
+
+.main-title {
+    font-family: 'Ma Shan Zheng', cursive;
+    font-size: clamp(2rem, 5vw, 3.2rem);
+    color: var(--gold);
+    letter-spacing: 0.3em;
+    text-shadow: 0 0 clamp(15px, 2vw, 30px) rgba(212,175,55,0.4);
+    line-height: 1.2;
+    margin: 0;
+}
+
+/* 三栏横向：左按钮 | 副标题 | 右按钮 */
+.header-sub-row {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+    max-width: 1400px;
+    margin: 0 auto;
+}
+
+/* 左右按钮组：横着、均匀分散 */
+.type-btns-left,
+.type-btns-right {
+    display: flex;
+    flex-direction: row;            /* 横着 */
+    justify-content: space-evenly;  /* 均匀分散 */
+    flex: 1;
+    align-items: center;
+}
+
+.type-btns-left  { padding-right: clamp(16px, 3vw, 40px); }
+.type-btns-right { padding-left: clamp(16px, 3vw, 40px); }
+
+/* 副标题：固定居中，不被挤压 */
+.sub-title {
+    font-size: clamp(0.75rem, 1.4vw, 0.95rem);
+    color: var(--text-sub);
+    letter-spacing: 0.15em;
+    margin: 0;
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+
+/* 按钮：稍小 + 圆角 */
+.type-btn {
+    font-family: 'Ma Shan Zheng', 'Noto Serif SC', serif;
+    font-size: clamp(0.75rem, 1.1vw, 0.9rem);
+    color: var(--gold);
+    background: rgba(22, 22, 22, 0.6);
+    border: 1px solid rgba(212, 175, 55, 0.35);
+    padding: clamp(5px, 0.8vh, 8px) clamp(12px, 1.8vw, 24px);
+    cursor: pointer;
+    transition: all 0.35s ease;
+    position: relative;
+    overflow: hidden;
+    letter-spacing: 0.15em;
+    backdrop-filter: blur(4px);
+    border-radius: 6px;              /* 圆角 */
+    text-align: center;
+}
+
+/* 扫光效果 */
+.type-btn::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(212, 175, 55, 0.25), transparent);
+    transition: left 0.6s ease;
+    border-radius: 6px;
+}
+
+.type-btn:hover::before {
+    left: 100%;
+}
+
+.type-btn:hover {
+    border-color: var(--gold);
+    color: #fff;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 16px rgba(212, 175, 55, 0.2);
+}
+
+/* 激活状态：金底黑字 */
+.type-btn.active {
+    background: var(--gold);
+    color: #0f0f0f;
+    border-color: var(--gold);
+    font-weight: bold;
+}
+
+.type-btn.active::before {
+    display: none;
+}
+
+/* 响应式：小屏幕换行 */
+@media (max-width: 768px) {
+    .header-sub-row {
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 8px;
+    }
+    
+    .type-btns-left,
+    .type-btns-right {
+        flex: none;
+        justify-content: center;
+        padding: 0;
+        gap: 8px;
+    }
+    
+    .sub-title {
+        order: -1;
+        width: 100%;
+        margin: 0 0 6px;
+        text-align: center;
+    }
+    
+    .type-btn {
+        padding: 5px 12px;
+        font-size: 0.75rem;
+    }
 }

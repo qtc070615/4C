@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>类型大厅</title>
+    <script src="https://cdn.jsdelivr.net/npm/echarts@6.0.0/dist/echarts.min.js"></script>
+    <link rel="stylesheet" href="../css/profile.css">
+</head>
+<body>
+
+    <button class="mobile-toggle" id="mobileToggle">▶</button>
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <div class="menu-search-box">
+                <input type="text" id="menuSearch" placeholder="搜索省份或建筑..." autocomplete="off">
+                <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="11" cy="11" r="8"></circle>
+                    <path d="m21 21-4.35-4.35"></path>
+                </svg>
+            </div>
+        </div>
+        <div class="menu-accordion" id="menuAccordion"></div>
+    </aside>
+
+    <main class="main-content" id="mainContent">
+        <div class="particle-layer" id="particleLayer"></div>
+
+        <div class="compact-nav" id="compactNav">
+            <a href="../../main/China/html/main.html" class="back-btn">← 返回全国地图</a>
+            <div class="nav-title" id="navTypeName">类型</div>
+            <div class="nav-count" id="navBuildingCount">现存 0 处</div>
+        </div>
+
+        <div class="top-bar">
+            <a href="../../main/China/html/main.html" class="back-btn">← 返回全国地图</a>
+            <div class="meta-info">现存 <span id="buildingNum">0</span> 处</div>
+        </div>
+
+        <div class="content-area">
+            <div class="page-title">
+                <h1 id="pageTitle">类型</h1>
+                <p id="pageEnName">Type</p>
+            </div>
+
+            <!-- 简介 -->
+            <div class="box">
+                <div class="box-header">
+                    <div class="box-title">类型概述</div>
+                </div>
+                <div class="box-body">
+                    <div class="province-desc" id="typeDesc">加载中...</div>
+                </div>
+            </div>
+
+            <!-- 两个图表并列 -->
+            <div class="grid-2">
+                <div class="box">
+                    <div class="box-header">
+                        <div class="box-title">建筑地区分布</div>
+                    </div>
+                    <div class="box-body chart-box-body">
+                        <div id="regionChart"></div>
+                    </div>
+                </div>
+
+                <div class="box">
+                    <div class="box-header">
+                        <div class="box-title">建筑年代分布</div>
+                    </div>
+                    <div class="box-body chart-box-body">
+                        <div id="periodChart"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script src="../json/type-data.js"></script>
+    <script src="../js/type-hall.js"></script>
+</body>
+</html>
