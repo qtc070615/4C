@@ -113,7 +113,15 @@ var BuildingApp = typeof BuildingApp !== 'undefined' ? BuildingApp : {
                 this.data.provinceBuildings = province.buildings;
                 const crumb = document.getElementById('crumbProvince');
                 if (crumb) crumb.textContent = province.name;
-                const hallUrl = `./profile.html?province=${encodeURIComponent(province.name)}`;
+                
+                const currentType = this.getUrlParam('type');
+                let hallUrl;
+                if (currentType) {
+                    hallUrl = `./type-hall.html?type=${encodeURIComponent(currentType)}`;
+                } else {
+                    hallUrl = `./profile.html?province=${encodeURIComponent(province.name)}`;
+                }
+                
                 const backToHall = document.getElementById('backToHall');
                 if (backToHall) backToHall.href = hallUrl;
                 if (crumb) crumb.href = hallUrl;
@@ -126,12 +134,40 @@ var BuildingApp = typeof BuildingApp !== 'undefined' ? BuildingApp : {
     initSidebarMenu() {
         const container = document.getElementById('menuAccordion');
         const searchInput = document.getElementById('menuSearch');
-        if (!container || !searchInput || typeof PROFILE_DB === 'undefined') return;
+        if (!container || !searchInput) return;
 
-        const allProvinces = PROFILE_DB.provinces;
+        const currentTypeName = this.getUrlParam('type');
         const currentProvinceName = this.data.currentProvince?.name || '';
         const currentBuildingName = this.data.currentBuilding?.name || '';
         const originalTexts = new Map();
+
+        let allProvinces = [];
+        let isTypeMode = false;
+
+        if (currentTypeName && typeof TYPE_DB !== 'undefined') {
+            const typeData = TYPE_DB.types.find(t => t.name === currentTypeName);
+            if (typeData && typeData.buildings) {
+                isTypeMode = true;
+                const map = {};
+                typeData.buildings.forEach(b => {
+                    if (!map[b.province]) map[b.province] = [];
+                    map[b.province].push(b);
+                });
+                allProvinces = Object.keys(map).map(name => ({
+                    name: name,
+                    buildings: map[name]
+                }));
+            }
+        }
+
+        if (!isTypeMode && typeof PROFILE_DB !== 'undefined') {
+            allProvinces = PROFILE_DB.provinces;
+        }
+
+        if (allProvinces.length === 0) {
+            container.innerHTML = '<div class="menu-no-result">暂无数据</div>';
+            return;
+        }
 
         const buildHtml = (provinces) => {
             return provinces.map((province, pIdx) => {
@@ -139,13 +175,17 @@ var BuildingApp = typeof BuildingApp !== 'undefined' ? BuildingApp : {
                 const buildings = province.buildings || [];
                 const links = buildings.map(b => {
                     const isCurrent = b.name === currentBuildingName;
-                    const href = `./building.html?name=${encodeURIComponent(b.name)}&province=${encodeURIComponent(province.name)}`;
+                    const href = `./building.html?name=${encodeURIComponent(b.name)}&province=${encodeURIComponent(province.name)}${isTypeMode ? '&type=' + encodeURIComponent(currentTypeName) : ''}`;
                     return `<a href="${href}" class="accordion-link ${isCurrent ? 'current' : ''}" data-pidx="${pIdx}" data-name="${b.name}">${b.name}</a>`;
                 }).join('');
 
+                const headerHref = isTypeMode 
+                    ? `./profile.html?province=${encodeURIComponent(province.name)}`
+                    : `./profile.html?province=${encodeURIComponent(province.name)}`;
+
                 return `
                     <div class="accordion-item ${isActive}" data-pidx="${pIdx}" data-pname="${province.name}">
-                        <a href="./profile.html?province=${encodeURIComponent(province.name)}" class="accordion-header" data-pidx="${pIdx}">
+                        <a href="${headerHref}" class="accordion-header" data-pidx="${pIdx}">
                             <span class="header-text">${province.name}</span>
                         </a>
                         <div class="accordion-body">${links}</div>

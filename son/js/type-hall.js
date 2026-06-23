@@ -84,15 +84,15 @@ var App = {
         const buildHtml = (items) => {
             return items.map((province, pIdx) => {
                 const links = province.buildings.map(b => {
-                    const href = `./building.html?name=${encodeURIComponent(b.name)}&province=${encodeURIComponent(province.name)}`;
+                    const href = `./building.html?name=${encodeURIComponent(b.name)}&province=${encodeURIComponent(province.name)}&type=${encodeURIComponent(this.currentType.name)}`;
                     return `<a href="${href}" class="accordion-link" data-pidx="${pIdx}" data-name="${b.name}">${b.name}</a>`;
                 }).join('');
 
                 return `
                     <div class="accordion-item" data-pidx="${pIdx}" data-pname="${province.name}">
-                        <div class="accordion-header" data-pidx="${pIdx}">
+                        <a href="./profile.html?province=${encodeURIComponent(province.name)}&type=${encodeURIComponent(this.currentType.name)}" class="accordion-header" data-pidx="${pIdx}">
                             <span class="header-text">${province.name}</span>
-                        </div>
+                        </a>
                         <div class="accordion-body">${links}</div>
                     </div>
                 `;
@@ -114,9 +114,21 @@ var App = {
         const bindAccordion = () => {
             container.querySelectorAll('.accordion-header').forEach(header => {
                 header.addEventListener('click', (e) => {
-                    e.preventDefault();
                     const item = header.closest('.accordion-item');
-                    item.classList.toggle('active');
+                    const isActive = item.classList.contains('active');
+                    
+                    // 搜索状态下，只展开/折叠，不跳转
+                    if (searchInput.value.trim()) {
+                        e.preventDefault();
+                        item.classList.toggle('active');
+                        return;
+                    }
+                    
+                    // 未展开时点击展开，已展开时让链接正常跳转
+                    if (!isActive) {
+                        e.preventDefault();
+                        item.classList.add('active');
+                    }
                 });
             });
         };

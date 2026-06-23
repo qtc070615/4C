@@ -3,6 +3,7 @@ var App = typeof App !== 'undefined' ? App : {
     resizeObserver: null,
     lastWidth: window.innerWidth,
     currentProvince: null,
+    currentType: null,
 
     init() {
         if (typeof PROFILE_DB === 'undefined') {
@@ -78,6 +79,24 @@ var App = typeof App !== 'undefined' ? App : {
             if (creditEl && this.currentProvince.mapCredit) {
                 creditEl.textContent = this.currentProvince.mapCredit;
             }
+
+            // 读取 type 参数
+            const typeName = this.getUrlParam('type');
+            if (typeName && typeof TYPE_DB !== 'undefined') {
+                this.currentType = TYPE_DB.types.find(t => t.name === typeName);
+            }
+
+            // 修改返回按钮
+            const backBtn = document.querySelector('.top-bar .back-btn');
+            if (backBtn) {
+                if (this.currentType) {
+                    backBtn.href = `./type-hall.html?type=${encodeURIComponent(this.currentType.name)}`;
+                    backBtn.textContent = '← 返回类型大厅';
+                } else {
+                    backBtn.href = '../../main/China/html/main.html';
+                    backBtn.textContent = '← 返回全国地图';
+                }
+            }
         } catch (error) {
             alert('加载数据失败：' + error.message);
         }
@@ -88,22 +107,44 @@ var App = typeof App !== 'undefined' ? App : {
         const searchInput = document.getElementById('menuSearch');
         if (!container || !searchInput || typeof PROFILE_DB === 'undefined') return;
 
-        const allProvinces = PROFILE_DB.provinces;
         const currentProvinceName = this.currentProvince?.name || '';
         const originalTexts = new Map();
+
+        // 判断是否有类型限制
+        let allProvinces = [];
+        let isTypeMode = false;
+
+        if (this.currentType && this.currentType.buildings) {
+            isTypeMode = true;
+            const map = {};
+            this.currentType.buildings.forEach(b => {
+                if (!map[b.province]) map[b.province] = [];
+                map[b.province].push(b);
+            });
+            allProvinces = Object.keys(map).map(name => ({
+                name: name,
+                buildings: map[name]
+            }));
+        } else {
+            allProvinces = PROFILE_DB.provinces;
+        }
 
         const buildHtml = (provinces) => {
             return provinces.map((province, pIdx) => {
                 const isActive = province.name === currentProvinceName ? 'active' : '';
                 const buildings = province.buildings || [];
                 const links = buildings.map(b => {
-                    const href = `./building.html?name=${encodeURIComponent(b.name)}&province=${encodeURIComponent(province.name)}`;
+                    const href = `./building.html?name=${encodeURIComponent(b.name)}&province=${encodeURIComponent(province.name)}${isTypeMode ? '&type=' + encodeURIComponent(this.currentType.name) : ''}`;
                     return `<a href="${href}" class="accordion-link" data-pidx="${pIdx}" data-name="${b.name}">${b.name}</a>`;
                 }).join('');
 
+                const headerHref = isTypeMode
+                    ? `./profile.html?province=${encodeURIComponent(province.name)}&type=${encodeURIComponent(this.currentType.name)}`
+                    : `./profile.html?province=${encodeURIComponent(province.name)}`;
+
                 return `
                     <div class="accordion-item ${isActive}" data-pidx="${pIdx}" data-pname="${province.name}">
-                        <a href="./profile.html?province=${encodeURIComponent(province.name)}" class="accordion-header" data-pidx="${pIdx}">
+                        <a href="${headerHref}" class="accordion-header" data-pidx="${pIdx}">
                             <span class="header-text">${province.name}</span>
                         </a>
                         <div class="accordion-body">${links}</div>
