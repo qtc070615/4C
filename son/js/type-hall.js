@@ -26,7 +26,8 @@ var App = {
         this.loadTypeData();
         this.initSidebarMenu();
         this.initParticles();
-        setTimeout(() => this.initCharts(), 100);
+        // 延迟到布局完成后再初始化图表
+        setTimeout(() => this.initCharts(), 300);
         this.initCompactNav();
         this.bindEvents();
 
@@ -60,42 +61,18 @@ var App = {
         setText('navBuildingCount', `现存 ${count} 处`);
     },
 
-    groupByProvince() {
-        const buildings = this.currentType.buildings || [];
-        const map = {};
-        buildings.forEach(b => {
-            if (!map[b.province]) map[b.province] = [];
-            map[b.province].push(b);
-        });
-        return Object.keys(map).map(name => ({
-            name: name,
-            buildings: map[name]
-        }));
-    },
-
     initSidebarMenu() {
         const container = document.getElementById('menuAccordion');
         const searchInput = document.getElementById('menuSearch');
         if (!container || !searchInput || !this.currentType) return;
 
-        const provinces = this.groupByProvince();
+        const buildings = this.currentType.buildings || [];
         const originalTexts = new Map();
 
         const buildHtml = (items) => {
-            return items.map((province, pIdx) => {
-                const links = province.buildings.map(b => {
-                    const href = `./building.html?name=${encodeURIComponent(b.name)}&province=${encodeURIComponent(province.name)}&type=${encodeURIComponent(this.currentType.name)}`;
-                    return `<a href="${href}" class="accordion-link" data-pidx="${pIdx}" data-name="${b.name}">${b.name}</a>`;
-                }).join('');
-
-                return `
-                    <div class="accordion-item" data-pidx="${pIdx}" data-pname="${province.name}">
-                        <a href="./profile.html?province=${encodeURIComponent(province.name)}&type=${encodeURIComponent(this.currentType.name)}" class="accordion-header" data-pidx="${pIdx}">
-                            <span class="header-text">${province.name}</span>
-                        </a>
-                        <div class="accordion-body">${links}</div>
-                    </div>
-                `;
+            return items.map(b => {
+                const href = `./building.html?name=${encodeURIComponent(b.name)}&type=${encodeURIComponent(this.currentType.name)}`;
+                return `<a href="${href}" class="accordion-link flat-link" data-name="${b.name}">${b.name}</a>`;
             }).join('');
         };
 
@@ -105,31 +82,8 @@ var App = {
                 return;
             }
             container.innerHTML = buildHtml(items);
-            container.querySelectorAll('.header-text, .accordion-link').forEach(el => {
+            container.querySelectorAll('.accordion-link').forEach(el => {
                 originalTexts.set(el, el.textContent);
-            });
-            bindAccordion();
-        };
-
-        const bindAccordion = () => {
-            container.querySelectorAll('.accordion-header').forEach(header => {
-                header.addEventListener('click', (e) => {
-                    const item = header.closest('.accordion-item');
-                    const isActive = item.classList.contains('active');
-                    
-                    // 搜索状态下，只展开/折叠，不跳转
-                    if (searchInput.value.trim()) {
-                        e.preventDefault();
-                        item.classList.toggle('active');
-                        return;
-                    }
-                    
-                    // 未展开时点击展开，已展开时让链接正常跳转
-                    if (!isActive) {
-                        e.preventDefault();
-                        item.classList.add('active');
-                    }
-                });
             });
         };
 
@@ -137,8 +91,7 @@ var App = {
 
         const filter = (keyword) => {
             if (!keyword) {
-                render(provinces);
-                container.querySelectorAll('.accordion-item').forEach(i => i.classList.remove('active'));
+                render(buildings);
                 const noResult = container.querySelector('.menu-no-result');
                 if (noResult) noResult.remove();
                 return;
@@ -147,46 +100,20 @@ var App = {
             const lowerK = keyword.toLowerCase();
             let hasAnyMatch = false;
 
-            provinces.forEach((province, pIdx) => {
-                const item = container.querySelector(`.accordion-item[data-pidx="${pIdx}"]`);
-                if (!item) return;
-
-                const headerText = item.querySelector('.header-text');
-                const links = item.querySelectorAll('.accordion-link');
-                const pMatch = province.name.toLowerCase().includes(lowerK);
-                let bMatchCount = 0;
-
-                links.forEach(link => {
-                    const bName = link.dataset.name.toLowerCase();
-                    if (bName.includes(lowerK)) {
-                        link.style.display = '';
-                        bMatchCount++;
-                        const orig = originalTexts.get(link);
-                        if (orig) {
-                            const regex = new RegExp(`(${escapeRegex(keyword)})`, 'gi');
-                            link.innerHTML = orig.replace(regex, '<span class="highlight-text">$1</span>');
-                        }
-                    } else {
-                        link.style.display = 'none';
-                        if (originalTexts.has(link)) link.textContent = originalTexts.get(link);
-                    }
-                });
-
-                if (pMatch || bMatchCount > 0) {
-                    item.style.display = '';
-                    item.classList.add('active');
+            const links = container.querySelectorAll('.accordion-link');
+            links.forEach(link => {
+                const bName = link.dataset.name.toLowerCase();
+                if (bName.includes(lowerK)) {
+                    link.style.display = '';
                     hasAnyMatch = true;
-                    if (pMatch) {
-                        const orig = originalTexts.get(headerText);
-                        if (orig) {
-                            const regex = new RegExp(`(${escapeRegex(keyword)})`, 'gi');
-                            headerText.innerHTML = orig.replace(regex, '<span class="highlight-text">$1</span>');
-                        }
-                    } else {
-                        if (originalTexts.has(headerText)) headerText.textContent = originalTexts.get(headerText);
+                    const orig = originalTexts.get(link);
+                    if (orig) {
+                        const regex = new RegExp(`(${escapeRegex(keyword)})`, 'gi');
+                        link.innerHTML = orig.replace(regex, '<span class="highlight-text">$1</span>');
                     }
                 } else {
-                    item.style.display = 'none';
+                    link.style.display = 'none';
+                    if (originalTexts.has(link)) link.textContent = originalTexts.get(link);
                 }
             });
 
@@ -200,7 +127,7 @@ var App = {
             noResult.style.display = hasAnyMatch ? 'none' : 'block';
         };
 
-        render(provinces);
+        render(buildings);
         searchInput.addEventListener('input', (e) => filter(e.target.value.trim()));
     },
 
@@ -226,95 +153,111 @@ var App = {
         const axisSize = isMobile ? 10 : 11;
 
         const regionDom = document.getElementById('regionChart');
-        if (regionDom && chartData.region) {
-            const rect = regionDom.getBoundingClientRect();
-            if (rect.width === 0 || rect.height === 0) {
-                setTimeout(() => this.initCharts(), 500);
-                return;
+        const periodDom = document.getElementById('periodChart');
+
+        // 关键修复：如果容器没撑开，强制设置默认高度，确保 echarts 能渲染
+        [regionDom, periodDom].forEach(dom => {
+            if (!dom) return;
+            const rect = dom.getBoundingClientRect();
+            if (rect.height === 0) {
+                dom.style.height = '300px';
             }
-            if (this.charts.region) this.charts.region.dispose();
-            this.charts.region = echarts.init(regionDom, 'dark');
-            this.charts.region.setOption({
-                backgroundColor: 'transparent',
-                tooltip: {
-                    trigger: 'item',
-                    formatter: '{b}: {c}处 ({d}%)',
-                    backgroundColor: 'rgba(22,22,22,0.95)',
-                    borderColor: '#D4AF37',
-                    borderWidth: 1,
-                    textStyle: { color: '#e8e8e8', fontSize: 12 }
-                },
-                legend: {
-                    orient: 'horizontal',
-                    bottom: '2%',
-                    left: 'center',
-                    textStyle: { color: '#a0a0a0', fontSize: axisSize },
-                    itemWidth: 10,
-                    itemHeight: 10,
-                    itemGap: 10
-                },
-                series: [{
-                    name: '地区分布',
-                    type: 'pie',
-                    radius: ['32%', '52%'],
-                    center: ['50%', '42%'],
-                    avoidLabelOverlap: true,
-                    itemStyle: { borderRadius: 3, borderColor: '#161616', borderWidth: 2 },
-                    label: { show: false },
-                    emphasis: {
-                        label: { show: true, fontSize: 12, fontWeight: 'bold', color: '#D4AF37' }
+            if (rect.width === 0) {
+                dom.style.width = '100%';
+            }
+        });
+
+        if (regionDom && chartData.region) {
+            try {
+                if (this.charts.region) this.charts.region.dispose();
+                this.charts.region = echarts.init(regionDom, 'dark');
+                this.charts.region.setOption({
+                    backgroundColor: 'transparent',
+                    tooltip: {
+                        trigger: 'item',
+                        formatter: '{b}: {c}处 ({d}%)',
+                        backgroundColor: 'rgba(22,22,22,0.95)',
+                        borderColor: '#D4AF37',
+                        borderWidth: 1,
+                        textStyle: { color: '#e8e8e8', fontSize: 12 }
                     },
-                    data: chartData.region,
-                    color: ['#D4AF37', '#B8941F', '#9A7B18', '#7D6212', '#8B7355', '#C4B9C2', '#A69B8D'],
-                    minAngle: 5,
-                    minShowLabelAngle: 10
-                }]
-            });
+                    legend: {
+                        orient: 'horizontal',
+                        bottom: '2%',
+                        left: 'center',
+                        textStyle: { color: '#a0a0a0', fontSize: axisSize },
+                        itemWidth: 10,
+                        itemHeight: 10,
+                        itemGap: 10
+                    },
+                    series: [{
+                        name: '地区分布',
+                        type: 'pie',
+                        radius: ['32%', '52%'],
+                        center: ['50%', '42%'],
+                        avoidLabelOverlap: true,
+                        itemStyle: { borderRadius: 3, borderColor: '#161616', borderWidth: 2 },
+                        label: { show: false },
+                        emphasis: {
+                            label: { show: true, fontSize: 12, fontWeight: 'bold', color: '#D4AF37' }
+                        },
+                        data: chartData.region,
+                        color: ['#D4AF37', '#B8941F', '#9A7B18', '#7D6212', '#8B7355', '#C4B9C2', '#A69B8D'],
+                        minAngle: 5,
+                        minShowLabelAngle: 10
+                    }]
+                });
+            } catch (e) {
+                console.error('地区分布图表初始化失败:', e);
+            }
         }
 
-        const periodDom = document.getElementById('periodChart');
         if (periodDom && chartData.period) {
-            if (this.charts.period) this.charts.period.dispose();
-            this.charts.period = echarts.init(periodDom, 'dark');
-            this.charts.period.setOption({
-                backgroundColor: 'transparent',
-                tooltip: {
-                    trigger: 'axis',
-                    backgroundColor: 'rgba(22,22,22,0.95)',
-                    borderColor: '#D4AF37',
-                    borderWidth: 1,
-                    textStyle: { color: '#e8e8e8', fontSize: 12 }
-                },
-                grid: { left: '3%', right: '4%', bottom: '3%', top: '12%', containLabel: true },
-                xAxis: {
-                    type: 'category',
-                    data: chartData.period.categories,
-                    axisLine: { lineStyle: { color: '#8B7355' } },
-                    axisLabel: { color: '#a0a0a0', fontSize: axisSize },
-                    axisTick: { show: false }
-                },
-                yAxis: {
-                    type: 'value',
-                    splitLine: { lineStyle: { color: 'rgba(212, 175, 55, 0.1)', type: 'dashed' } },
-                    axisLabel: { color: '#a0a0a0', fontSize: axisSize - 1 }
-                },
-                series: [{
-                    name: '建筑数量',
-                    type: 'line',
-                    data: chartData.period.values,
-                    smooth: true,
-                    symbol: 'circle',
-                    symbolSize: 6,
-                    lineStyle: { color: '#D4AF37', width: 2 },
-                    itemStyle: { color: '#D4AF37', borderColor: '#fff', borderWidth: 2 },
-                    areaStyle: {
-                        color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
-                            { offset: 0, color: 'rgba(212, 175, 55, 0.3)' },
-                            { offset: 1, color: 'rgba(212, 175, 55, 0)' }
-                        ])
-                    }
-                }]
-            });
+            try {
+                if (this.charts.period) this.charts.period.dispose();
+                this.charts.period = echarts.init(periodDom, 'dark');
+                this.charts.period.setOption({
+                    backgroundColor: 'transparent',
+                    tooltip: {
+                        trigger: 'axis',
+                        backgroundColor: 'rgba(22,22,22,0.95)',
+                        borderColor: '#D4AF37',
+                        borderWidth: 1,
+                        textStyle: { color: '#e8e8e8', fontSize: 12 }
+                    },
+                    grid: { left: '3%', right: '4%', bottom: '3%', top: '12%', containLabel: true },
+                    xAxis: {
+                        type: 'category',
+                        data: chartData.period.categories,
+                        axisLine: { lineStyle: { color: '#8B7355' } },
+                        axisLabel: { color: '#a0a0a0', fontSize: axisSize },
+                        axisTick: { show: false }
+                    },
+                    yAxis: {
+                        type: 'value',
+                        splitLine: { lineStyle: { color: 'rgba(212, 175, 55, 0.1)', type: 'dashed' } },
+                        axisLabel: { color: '#a0a0a0', fontSize: axisSize - 1 }
+                    },
+                    series: [{
+                        name: '建筑数量',
+                        type: 'line',
+                        data: chartData.period.values,
+                        smooth: true,
+                        symbol: 'circle',
+                        symbolSize: 6,
+                        lineStyle: { color: '#D4AF37', width: 2 },
+                        itemStyle: { color: '#D4AF37', borderColor: '#fff', borderWidth: 2 },
+                        areaStyle: {
+                            color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+                                { offset: 0, color: 'rgba(212, 175, 55, 0.3)' },
+                                { offset: 1, color: 'rgba(212, 175, 55, 0)' }
+                            ])
+                        }
+                    }]
+                });
+            } catch (e) {
+                console.error('年代分布图表初始化失败:', e);
+            }
         }
     },
 

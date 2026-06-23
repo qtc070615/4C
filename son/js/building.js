@@ -14,14 +14,22 @@ var BuildingApp = typeof BuildingApp !== 'undefined' ? BuildingApp : {
         }
 
         const buildingName = this.getUrlParam('name');
-        const provinceName = this.getUrlParam('province');
-        if (!buildingName || !provinceName) {
-            console.error('缺少参数，URL应为: building.html?name=故宫&province=北京');
+        if (!buildingName) {
+            console.error('缺少参数，URL应为: building.html?name=故宫');
             return;
         }
 
         this.loadBuildingData(buildingName);
-        this.loadProvinceData(provinceName);
+        
+        let provinceName = this.getUrlParam('province');
+        if (!provinceName && this.data.currentBuilding) {
+            provinceName = this.data.currentBuilding.province;
+        }
+        
+        if (provinceName) {
+            this.loadProvinceData(provinceName);
+        }
+        
         this.initSidebarMenu();
         this.initParticles();
         this.initImmersiveMode();
@@ -95,6 +103,21 @@ var BuildingApp = typeof BuildingApp !== 'undefined' ? BuildingApp : {
                     `<li><strong>${f.title}：</strong>${f.desc}</li>`
                 ).join('');
             }
+
+            const crumbMiddle = document.getElementById('crumbMiddle');
+            const crumbBuildingName = document.getElementById('crumbBuildingName');
+            const currentType = this.getUrlParam('type');
+            
+            if (crumbMiddle && crumbBuildingName) {
+                if (currentType) {
+                    crumbMiddle.textContent = currentType;
+                    crumbMiddle.href = `./type-hall.html?type=${encodeURIComponent(currentType)}`;
+                } else {
+                    crumbMiddle.textContent = b.province;
+                    crumbMiddle.href = `./profile.html?province=${encodeURIComponent(b.province)}`;
+                }
+                crumbBuildingName.textContent = b.name;
+            }
         } catch (error) {
             console.error('加载建筑数据失败:', error);
         }
@@ -111,20 +134,6 @@ var BuildingApp = typeof BuildingApp !== 'undefined' ? BuildingApp : {
             if (province) {
                 this.data.currentProvince = province;
                 this.data.provinceBuildings = province.buildings;
-                const crumb = document.getElementById('crumbProvince');
-                if (crumb) crumb.textContent = province.name;
-                
-                const currentType = this.getUrlParam('type');
-                let hallUrl;
-                if (currentType) {
-                    hallUrl = `./type-hall.html?type=${encodeURIComponent(currentType)}`;
-                } else {
-                    hallUrl = `./profile.html?province=${encodeURIComponent(province.name)}`;
-                }
-                
-                const backToHall = document.getElementById('backToHall');
-                if (backToHall) backToHall.href = hallUrl;
-                if (crumb) crumb.href = hallUrl;
             }
         } catch (error) {
             console.error('加载省份数据失败:', error);
@@ -141,26 +150,112 @@ var BuildingApp = typeof BuildingApp !== 'undefined' ? BuildingApp : {
         const currentBuildingName = this.data.currentBuilding?.name || '';
         const originalTexts = new Map();
 
-        let allProvinces = [];
-        let isTypeMode = false;
-
+        // ========== 类型模式：扁平列表（无省份分组） ==========
         if (currentTypeName && typeof TYPE_DB !== 'undefined') {
             const typeData = TYPE_DB.types.find(t => t.name === currentTypeName);
             if (typeData && typeData.buildings) {
-                isTypeMode = true;
-                const map = {};
-                typeData.buildings.forEach(b => {
-                    if (!map[b.province]) map[b.province] = [];
-                    map[b.province].push(b);
-                });
-                allProvinces = Object.keys(map).map(name => ({
-                    name: name,
-                    buildings: map[name]
-                }));
+                const buildings = typeData.buildings;
+
+                const buildFlatHtml = (items) => {
+                    return items.map(b => {
+                        const isCurrent = b.name === currentBuildingName;
+                        const href = `./building.html?name=${encodeURIComponent(b.name)}&type=${encodeURIComponent(currentTypeName)}`;
+                        return `<a href="${href}" class="accordion-link flat-link ${isCurrent ? 'current' : ''}" data-name="${b.name}">${b.name}</a>`;
+                    }).join('');
+                };
+
+                const renderFlat = (items) => {
+                    if (!items || items.length === 0) {
+                        container.innerHTML = '<div class="menu-no-result">暂无数据</div>';
+                        return;
+                    }
+                    container.innerHTML = buildFlatHtml(items);
+                    container.querySelectorAll('.accordion-link').forEach(el => {
+                        originalTexts.set(el, el.textContent);
+                    });
+                };
+
+                const escapeRegex = (str) => str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
+                const filterFlat = (keyword) => {
+                    if (!keyword) {
+                        renderFlat(buildings);
+                        const noResult = container.querySelector('.menu-no-result');
+                        if (noResult) noResult.remove();
+                        return;
+                    }
+                    const lowerK = keyword.toLowerCase();
+                    let hasAnyMatch = false;
+                    const links = container.querySelectorAll('.accordion-link');
+                    links.forEach(link => {
+                        const bName = link.dataset.name.toLowerCase();
+                        if (bName.includes(lowerK)) {
+                            link.style.display = '';
+                            hasAnyMatch = true;
+                            const orig = originalTexts.get(link);
+                            if (orig) {
+                                const regex = new RegExp(`(${escapeRegex(keyword)})`, 'gi');
+                                link.innerHTML = orig.replace(regex, '<span class="highlight-text">$1</span>');
+                            }
+                        } else {
+                            link.style.display = 'none';
+                            if (originalTexts.has(link)) link.textContent = originalTexts.get(link);
+                        }
+                    });
+                    let noResult = container.querySelector('.menu-no-result');
+                    if (!noResult) {
+                        noResult = document.createElement('div');
+                        noResult.className = 'menu-no-result';
+                        noResult.textContent = '未找到匹配结果';
+                        container.appendChild(noResult);
+                    }
+                    noResult.style.display = hasAnyMatch ? 'none' : 'block';
+                };
+
+                const saveMenuState = () => {
+                    sessionStorage.setItem('menuState', JSON.stringify({
+                        scrollTop: container.scrollTop,
+                        searchValue: searchInput.value
+                    }));
+                };
+
+                const attachSaveState = () => {
+                    container.querySelectorAll('a').forEach(link => {
+                        link.addEventListener('click', saveMenuState);
+                    });
+                };
+
+                renderFlat(buildings);
+                attachSaveState();
+
+                if (this._pendingMenuState) {
+                    const state = this._pendingMenuState;
+                    const doRestore = () => {
+                        if (state.searchValue) {
+                            searchInput.value = state.searchValue;
+                            filterFlat(state.searchValue);
+                        }
+                        requestAnimationFrame(() => {
+                            requestAnimationFrame(() => {
+                                setTimeout(() => {
+                                    container.scrollTop = state.scrollTop || 0;
+                                }, 200);
+                            });
+                        });
+                        this._pendingMenuState = null;
+                    };
+                    requestAnimationFrame(doRestore);
+                }
+
+                searchInput.addEventListener('input', (e) => filterFlat(e.target.value.trim()));
+                container.dataset.initialized = 'true';
+                return;
             }
         }
 
-        if (!isTypeMode && typeof PROFILE_DB !== 'undefined') {
+        // ========== 省份模式：手风琴分组（原有逻辑） ==========
+        let allProvinces = [];
+        if (typeof PROFILE_DB !== 'undefined') {
             allProvinces = PROFILE_DB.provinces;
         }
 
@@ -175,13 +270,11 @@ var BuildingApp = typeof BuildingApp !== 'undefined' ? BuildingApp : {
                 const buildings = province.buildings || [];
                 const links = buildings.map(b => {
                     const isCurrent = b.name === currentBuildingName;
-                    const href = `./building.html?name=${encodeURIComponent(b.name)}&province=${encodeURIComponent(province.name)}${isTypeMode ? '&type=' + encodeURIComponent(currentTypeName) : ''}`;
+                    const href = `./building.html?name=${encodeURIComponent(b.name)}&province=${encodeURIComponent(province.name)}`;
                     return `<a href="${href}" class="accordion-link ${isCurrent ? 'current' : ''}" data-pidx="${pIdx}" data-name="${b.name}">${b.name}</a>`;
                 }).join('');
 
-                const headerHref = isTypeMode 
-                    ? `./profile.html?province=${encodeURIComponent(province.name)}`
-                    : `./profile.html?province=${encodeURIComponent(province.name)}`;
+                const headerHref = `./profile.html?province=${encodeURIComponent(province.name)}`;
 
                 return `
                     <div class="accordion-item ${isActive}" data-pidx="${pIdx}" data-pname="${province.name}">
@@ -252,6 +345,7 @@ var BuildingApp = typeof BuildingApp !== 'undefined' ? BuildingApp : {
 
                     saveMenuState();
                     doExpand(pname, willBeActive);
+
                     setTimeout(() => turboNavigate(href), 80);
                 });
             });
