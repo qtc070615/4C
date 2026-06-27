@@ -7,6 +7,8 @@ var BuildingApp = typeof BuildingApp !== 'undefined' ? BuildingApp : {
     },
 
     init() {
+        this.initGlobalLinkInterceptor();
+
         const saved = sessionStorage.getItem('menuState');
         if (saved) {
             try { this._pendingMenuState = JSON.parse(saved); } catch(e) {}
@@ -20,16 +22,16 @@ var BuildingApp = typeof BuildingApp !== 'undefined' ? BuildingApp : {
         }
 
         this.loadBuildingData(buildingName);
-        
+
         let provinceName = this.getUrlParam('province');
         if (!provinceName && this.data.currentBuilding) {
             provinceName = this.data.currentBuilding.province;
         }
-        
+
         if (provinceName) {
             this.loadProvinceData(provinceName);
         }
-        
+
         this.initSidebarMenu();
         this.initParticles();
         this.initImmersiveMode();
@@ -78,19 +80,22 @@ var BuildingApp = typeof BuildingApp !== 'undefined' ? BuildingApp : {
             setHtml('buildingDesc', b.desc);
 
             const baiduLink = document.getElementById('baiduLink');
-            if (baiduLink) baiduLink.href = b.baiduLink;
+            if (baiduLink) {
+                baiduLink.href = b.baiduLink;
+                baiduLink.target = '_self';
+            }
 
-            const imgPath = `../img/${b.image}`;
+            const imgPath = '../img/' + b.image;
             const heroImg = document.getElementById('heroImage');
             const immersiveImg = document.getElementById('immersiveImage');
             if (heroImg) { heroImg.src = imgPath; heroImg.alt = b.name; }
             if (immersiveImg) { immersiveImg.src = imgPath; immersiveImg.alt = b.name; }
 
-            const mapPath = `../img/map/${b.name}_map.png`;
+            const mapPath = '../img/map/' + b.name + '_map.png';
             const mapImg = document.getElementById('mapImage');
             if (mapImg) {
                 mapImg.src = mapPath;
-                mapImg.alt = `${b.name}位置地图`;
+                mapImg.alt = b.name + '位置地图';
                 mapImg.onerror = function() {
                     this.style.display = 'none';
                     this.parentElement.innerHTML = '<div style="color:#666; text-align:center; padding:20px; font-size:14px;">地图加载中...</div>';
@@ -100,21 +105,21 @@ var BuildingApp = typeof BuildingApp !== 'undefined' ? BuildingApp : {
             const featureList = document.getElementById('featureList');
             if (featureList) {
                 featureList.innerHTML = b.features.map(f => 
-                    `<li><strong>${f.title}：</strong>${f.desc}</li>`
+                    '<li><strong>' + f.title + '：</strong>' + f.desc + '</li>'
                 ).join('');
             }
 
             const crumbMiddle = document.getElementById('crumbMiddle');
             const crumbBuildingName = document.getElementById('crumbBuildingName');
             const currentType = this.getUrlParam('type');
-            
+
             if (crumbMiddle && crumbBuildingName) {
                 if (currentType) {
                     crumbMiddle.textContent = currentType;
-                    crumbMiddle.href = `./type-hall.html?type=${encodeURIComponent(currentType)}`;
+                    crumbMiddle.href = './type-hall.html?type=' + encodeURIComponent(currentType);
                 } else {
                     crumbMiddle.textContent = b.province;
-                    crumbMiddle.href = `./profile.html?province=${encodeURIComponent(b.province)}`;
+                    crumbMiddle.href = './profile.html?province=' + encodeURIComponent(b.province);
                 }
                 crumbBuildingName.textContent = b.name;
             }
@@ -140,6 +145,21 @@ var BuildingApp = typeof BuildingApp !== 'undefined' ? BuildingApp : {
         }
     },
 
+    initGlobalLinkInterceptor() {
+        document.addEventListener('click', (e) => {
+            const link = e.target.closest('a');
+            if (!link) return;
+            if (link.target === '_blank' || e.ctrlKey || e.metaKey || e.shiftKey || e.button === 1) {
+                e.preventDefault();
+                e.stopPropagation();
+                const href = link.getAttribute('href');
+                if (href && href !== '#' && !href.startsWith('javascript:')) {
+                    window.location.href = href;
+                }
+            }
+        }, true);
+    },
+
     initSidebarMenu() {
         const container = document.getElementById('menuAccordion');
         const searchInput = document.getElementById('menuSearch');
@@ -150,7 +170,6 @@ var BuildingApp = typeof BuildingApp !== 'undefined' ? BuildingApp : {
         const currentBuildingName = this.data.currentBuilding?.name || '';
         const originalTexts = new Map();
 
-        // ========== 类型模式：扁平列表（无省份分组） ==========
         if (currentTypeName && typeof TYPE_DB !== 'undefined') {
             const typeData = TYPE_DB.types.find(t => t.name === currentTypeName);
             if (typeData && typeData.buildings) {
@@ -159,8 +178,8 @@ var BuildingApp = typeof BuildingApp !== 'undefined' ? BuildingApp : {
                 const buildFlatHtml = (items) => {
                     return items.map(b => {
                         const isCurrent = b.name === currentBuildingName;
-                        const href = `./building.html?name=${encodeURIComponent(b.name)}&type=${encodeURIComponent(currentTypeName)}`;
-                        return `<a href="${href}" class="accordion-link flat-link ${isCurrent ? 'current' : ''}" data-name="${b.name}">${b.name}</a>`;
+                        const href = './building.html?name=' + encodeURIComponent(b.name) + '&type=' + encodeURIComponent(currentTypeName);
+                        return '<a href="' + href + '" target="_self" class="accordion-link flat-link ' + (isCurrent ? 'current' : '') + '" data-name="' + b.name + '">' + b.name + '</a>';
                     }).join('');
                 };
 
@@ -194,7 +213,7 @@ var BuildingApp = typeof BuildingApp !== 'undefined' ? BuildingApp : {
                             hasAnyMatch = true;
                             const orig = originalTexts.get(link);
                             if (orig) {
-                                const regex = new RegExp(`(${escapeRegex(keyword)})`, 'gi');
+                                const regex = new RegExp('(' + escapeRegex(keyword) + ')', 'gi');
                                 link.innerHTML = orig.replace(regex, '<span class="highlight-text">$1</span>');
                             }
                         } else {
@@ -253,7 +272,6 @@ var BuildingApp = typeof BuildingApp !== 'undefined' ? BuildingApp : {
             }
         }
 
-        // ========== 省份模式：手风琴分组（原有逻辑） ==========
         let allProvinces = [];
         if (typeof PROFILE_DB !== 'undefined') {
             allProvinces = PROFILE_DB.provinces;
@@ -270,20 +288,18 @@ var BuildingApp = typeof BuildingApp !== 'undefined' ? BuildingApp : {
                 const buildings = province.buildings || [];
                 const links = buildings.map(b => {
                     const isCurrent = b.name === currentBuildingName;
-                    const href = `./building.html?name=${encodeURIComponent(b.name)}&province=${encodeURIComponent(province.name)}`;
-                    return `<a href="${href}" class="accordion-link ${isCurrent ? 'current' : ''}" data-pidx="${pIdx}" data-name="${b.name}">${b.name}</a>`;
+                    const href = './building.html?name=' + encodeURIComponent(b.name) + '&province=' + encodeURIComponent(province.name);
+                    return '<a href="' + href + '" target="_self" class="accordion-link ' + (isCurrent ? 'current' : '') + '" data-pidx="' + pIdx + '" data-name="' + b.name + '">' + b.name + '</a>';
                 }).join('');
 
-                const headerHref = `./profile.html?province=${encodeURIComponent(province.name)}`;
+                const headerHref = './profile.html?province=' + encodeURIComponent(province.name);
 
-                return `
-                    <div class="accordion-item ${isActive}" data-pidx="${pIdx}" data-pname="${province.name}">
-                        <a href="${headerHref}" class="accordion-header" data-pidx="${pIdx}">
-                            <span class="header-text">${province.name}</span>
-                        </a>
-                        <div class="accordion-body">${links}</div>
-                    </div>
-                `;
+                return '<div class="accordion-item ' + isActive + '" data-pidx="' + pIdx + '" data-pname="' + province.name + '">' +
+                    '<a href="' + headerHref + '" target="_self" class="accordion-header" data-pidx="' + pIdx + '">' +
+                    '<span class="header-text">' + province.name + '</span>' +
+                    '</a>' +
+                    '<div class="accordion-body">' + links + '</div>' +
+                    '</div>';
             }).join('');
         };
 
@@ -306,17 +322,13 @@ var BuildingApp = typeof BuildingApp !== 'undefined' ? BuildingApp : {
                     if (i.dataset.pname !== pname) i.classList.remove('active');
                 });
             }
-            container.querySelectorAll(`[data-pname="${pname}"]`).forEach(i => {
+            container.querySelectorAll('[data-pname="' + pname + '"]').forEach(i => {
                 i.classList.toggle('active', willBeActive);
             });
         };
 
-        const turboNavigate = (href) => {
-            if (typeof window.Turbo !== 'undefined' && window.Turbo.visit) {
-                window.Turbo.visit(href);
-            } else {
-                window.location.href = href;
-            }
+        const navigateTo = (href) => {
+            window.location.href = href;
         };
 
         const saveMenuState = () => {
@@ -346,7 +358,7 @@ var BuildingApp = typeof BuildingApp !== 'undefined' ? BuildingApp : {
                     saveMenuState();
                     doExpand(pname, willBeActive);
 
-                    setTimeout(() => turboNavigate(href), 80);
+                    setTimeout(() => navigateTo(href), 80);
                 });
             });
         };
@@ -356,7 +368,7 @@ var BuildingApp = typeof BuildingApp !== 'undefined' ? BuildingApp : {
         const filter = (keyword) => {
             if (!keyword) {
                 render(allProvinces);
-                const current = container.querySelector(`[data-pname="${currentProvinceName}"]`);
+                const current = container.querySelector('[data-pname="' + currentProvinceName + '"]');
                 if (current) current.classList.add('active');
                 const noResult = container.querySelector('.menu-no-result');
                 if (noResult) noResult.remove();
@@ -365,7 +377,7 @@ var BuildingApp = typeof BuildingApp !== 'undefined' ? BuildingApp : {
             const lowerK = keyword.toLowerCase();
             let hasAnyMatch = false;
             allProvinces.forEach((province, pIdx) => {
-                const item = container.querySelector(`.accordion-item[data-pidx="${pIdx}"]`);
+                const item = container.querySelector('.accordion-item[data-pidx="' + pIdx + '"]');
                 if (!item) return;
                 const headerText = item.querySelector('.header-text');
                 const links = item.querySelectorAll('.accordion-link');
@@ -379,7 +391,7 @@ var BuildingApp = typeof BuildingApp !== 'undefined' ? BuildingApp : {
                         bMatchCount++;
                         const orig = originalTexts.get(link);
                         if (orig) {
-                            const regex = new RegExp(`(${escapeRegex(keyword)})`, 'gi');
+                            const regex = new RegExp('(' + escapeRegex(keyword) + ')', 'gi');
                             link.innerHTML = orig.replace(regex, '<span class="highlight-text">$1</span>');
                         }
                     } else {
@@ -395,7 +407,7 @@ var BuildingApp = typeof BuildingApp !== 'undefined' ? BuildingApp : {
                     if (pMatch) {
                         const orig = originalTexts.get(headerText);
                         if (orig) {
-                            const regex = new RegExp(`(${escapeRegex(keyword)})`, 'gi');
+                            const regex = new RegExp('(' + escapeRegex(keyword) + ')', 'gi');
                             headerText.innerHTML = orig.replace(regex, '<span class="highlight-text">$1</span>');
                         }
                     } else {
@@ -424,7 +436,7 @@ var BuildingApp = typeof BuildingApp !== 'undefined' ? BuildingApp : {
                     if (!state.searchValue) {
                         container.querySelectorAll('.accordion-item').forEach(i => i.classList.remove('active'));
                     }
-                    container.querySelectorAll(`[data-pname="${state.activeProvince}"]`).forEach(i => {
+                    container.querySelectorAll('[data-pname="' + state.activeProvince + '"]').forEach(i => {
                         i.classList.add('active');
                     });
                 }
@@ -574,17 +586,36 @@ var BuildingApp = typeof BuildingApp !== 'undefined' ? BuildingApp : {
         const mobileToggle = document.getElementById('mobileToggle');
         const sidebar = document.getElementById('sidebar');
         const overlay = document.getElementById('sidebarOverlay');
+
         if (mobileToggle && sidebar) {
-            mobileToggle.addEventListener('click', () => {
-                sidebar.classList.toggle('open');
-                mobileToggle.classList.toggle('hidden');
-            });
+            const toggleMenu = (e) => {
+                if (e) { e.preventDefault(); e.stopPropagation(); }
+                const isOpen = sidebar.classList.toggle('open');
+                mobileToggle.classList.toggle('hidden', isOpen);
+                if (overlay) overlay.classList.toggle('active', isOpen);
+            };
+
+            mobileToggle.addEventListener('click', toggleMenu);
+            mobileToggle.addEventListener('touchend', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                toggleMenu();
+            }, { passive: false });
         }
+
         if (overlay && sidebar && mobileToggle) {
-            overlay.addEventListener('click', () => {
+            const closeMenu = (e) => {
+                if (e) { e.preventDefault(); e.stopPropagation(); }
                 sidebar.classList.remove('open');
                 mobileToggle.classList.remove('hidden');
-            });
+                overlay.classList.remove('active');
+            };
+            overlay.addEventListener('click', closeMenu);
+            overlay.addEventListener('touchend', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                closeMenu();
+            }, { passive: false });
         }
     }
 };
@@ -594,5 +625,4 @@ if (!__buildingInitAttached) {
     __buildingInitAttached = true;
     const init = () => { BuildingApp.init(); };
     document.addEventListener('DOMContentLoaded', init);
-    document.addEventListener('turbo:load', init);
 }

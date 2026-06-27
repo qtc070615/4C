@@ -3,6 +3,8 @@ var App = {
     currentType: null,
 
     init() {
+        this.initGlobalLinkInterceptor();
+
         if (typeof TYPE_DB === 'undefined' || !TYPE_DB.types) {
             alert('数据加载失败：TYPE_DB 未定义');
             return;
@@ -26,7 +28,6 @@ var App = {
         this.loadTypeData();
         this.initSidebarMenu();
         this.initParticles();
-        // 延迟到布局完成后再初始化图表
         setTimeout(() => this.initCharts(), 300);
         this.initCompactNav();
         this.bindEvents();
@@ -54,11 +55,26 @@ var App = {
         setText('pageTitle', t.name);
         setText('pageEnName', t.enName);
         setHtml('typeDesc', t.desc.replace(/\n/g, '<br>'));
-        
+
         const count = t.buildingCount || (t.buildings ? t.buildings.length : 0);
         setText('buildingNum', count);
         setText('navTypeName', t.name);
-        setText('navBuildingCount', `现存 ${count} 处`);
+        setText('navBuildingCount', '现存 ' + count + ' 处');
+    },
+
+    initGlobalLinkInterceptor() {
+        document.addEventListener('click', (e) => {
+            const link = e.target.closest('a');
+            if (!link) return;
+            if (link.target === '_blank' || e.ctrlKey || e.metaKey || e.shiftKey || e.button === 1) {
+                e.preventDefault();
+                e.stopPropagation();
+                const href = link.getAttribute('href');
+                if (href && href !== '#' && !href.startsWith('javascript:')) {
+                    window.location.href = href;
+                }
+            }
+        }, true);
     },
 
     initSidebarMenu() {
@@ -71,8 +87,8 @@ var App = {
 
         const buildHtml = (items) => {
             return items.map(b => {
-                const href = `./building.html?name=${encodeURIComponent(b.name)}&type=${encodeURIComponent(this.currentType.name)}`;
-                return `<a href="${href}" class="accordion-link flat-link" data-name="${b.name}">${b.name}</a>`;
+                const href = './building.html?name=' + encodeURIComponent(b.name) + '&type=' + encodeURIComponent(this.currentType.name);
+                return '<a href="' + href + '" target="_self" class="accordion-link flat-link" data-name="' + b.name + '">' + b.name + '</a>';
             }).join('');
         };
 
@@ -108,7 +124,7 @@ var App = {
                     hasAnyMatch = true;
                     const orig = originalTexts.get(link);
                     if (orig) {
-                        const regex = new RegExp(`(${escapeRegex(keyword)})`, 'gi');
+                        const regex = new RegExp('(' + escapeRegex(keyword) + ')', 'gi');
                         link.innerHTML = orig.replace(regex, '<span class="highlight-text">$1</span>');
                     }
                 } else {
@@ -155,7 +171,6 @@ var App = {
         const regionDom = document.getElementById('regionChart');
         const periodDom = document.getElementById('periodChart');
 
-        // 关键修复：如果容器没撑开，强制设置默认高度，确保 echarts 能渲染
         [regionDom, periodDom].forEach(dom => {
             if (!dom) return;
             const rect = dom.getBoundingClientRect();
@@ -283,16 +298,33 @@ var App = {
         const sidebar = document.getElementById('sidebar');
         const overlay = document.getElementById('sidebarOverlay');
         if (mobileToggle && sidebar) {
-            mobileToggle.addEventListener('click', () => {
-                sidebar.classList.toggle('open');
-                mobileToggle.classList.toggle('hidden');
-            });
+            const toggleMenu = (e) => {
+                if (e) { e.preventDefault(); e.stopPropagation(); }
+                const isOpen = sidebar.classList.toggle('open');
+                mobileToggle.classList.toggle('hidden', isOpen);
+                if (overlay) overlay.classList.toggle('active', isOpen);
+            };
+
+            mobileToggle.addEventListener('click', toggleMenu);
+            mobileToggle.addEventListener('touchend', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                toggleMenu();
+            }, { passive: false });
         }
         if (overlay && sidebar && mobileToggle) {
-            overlay.addEventListener('click', () => {
+            const closeMenu = (e) => {
+                if (e) { e.preventDefault(); e.stopPropagation(); }
                 sidebar.classList.remove('open');
                 mobileToggle.classList.remove('hidden');
-            });
+                overlay.classList.remove('active');
+            };
+            overlay.addEventListener('click', closeMenu);
+            overlay.addEventListener('touchend', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                closeMenu();
+            }, { passive: false });
         }
 
         window.addEventListener('resize', () => {

@@ -6,6 +6,8 @@ var App = typeof App !== 'undefined' ? App : {
     currentType: null,
 
     init() {
+        this.initGlobalLinkInterceptor();
+
         if (typeof PROFILE_DB === 'undefined') {
             alert('数据加载失败：PROFILE_DB 未定义');
             return;
@@ -70,27 +72,25 @@ var App = typeof App !== 'undefined' ? App : {
             setHtml('provinceDesc', this.currentProvince.desc.replace(/\n/g, '<br>'));
             setText('buildingNum', this.currentProvince.buildingCount);
             setText('navProvinceName', this.currentProvince.name);
-            setText('navBuildingCount', `现存 ${this.currentProvince.buildingCount} 处`);
+            setText('navBuildingCount', '现存 ' + this.currentProvince.buildingCount + ' 处');
 
             const mapEl = document.getElementById('provinceMap');
-            if (mapEl) mapEl.data = `../map/${this.currentProvince.mapFile}`;
+            if (mapEl) mapEl.data = '../map/' + this.currentProvince.mapFile;
 
             const creditEl = document.getElementById('mapCredit');
             if (creditEl && this.currentProvince.mapCredit) {
                 creditEl.textContent = this.currentProvince.mapCredit;
             }
 
-            // 读取 type 参数
             const typeName = this.getUrlParam('type');
             if (typeName && typeof TYPE_DB !== 'undefined') {
                 this.currentType = TYPE_DB.types.find(t => t.name === typeName);
             }
 
-            // 修改返回按钮
             const backBtn = document.querySelector('.top-bar .back-btn');
             if (backBtn) {
                 if (this.currentType) {
-                    backBtn.href = `./type-hall.html?type=${encodeURIComponent(this.currentType.name)}`;
+                    backBtn.href = './type-hall.html?type=' + encodeURIComponent(this.currentType.name);
                     backBtn.textContent = '← 返回类型大厅';
                 } else {
                     backBtn.href = '../../main/China/html/main.html';
@@ -102,6 +102,21 @@ var App = typeof App !== 'undefined' ? App : {
         }
     },
 
+    initGlobalLinkInterceptor() {
+        document.addEventListener('click', (e) => {
+            const link = e.target.closest('a');
+            if (!link) return;
+            if (link.target === '_blank' || e.ctrlKey || e.metaKey || e.shiftKey || e.button === 1) {
+                e.preventDefault();
+                e.stopPropagation();
+                const href = link.getAttribute('href');
+                if (href && href !== '#' && !href.startsWith('javascript:')) {
+                    window.location.href = href;
+                }
+            }
+        }, true);
+    },
+
     initSidebarMenu() {
         const container = document.getElementById('menuAccordion');
         const searchInput = document.getElementById('menuSearch');
@@ -110,7 +125,6 @@ var App = typeof App !== 'undefined' ? App : {
         const currentProvinceName = this.currentProvince?.name || '';
         const originalTexts = new Map();
 
-        // 判断是否有类型限制
         let allProvinces = [];
         let isTypeMode = false;
 
@@ -134,22 +148,20 @@ var App = typeof App !== 'undefined' ? App : {
                 const isActive = province.name === currentProvinceName ? 'active' : '';
                 const buildings = province.buildings || [];
                 const links = buildings.map(b => {
-                    const href = `./building.html?name=${encodeURIComponent(b.name)}&province=${encodeURIComponent(province.name)}${isTypeMode ? '&type=' + encodeURIComponent(this.currentType.name) : ''}`;
-                    return `<a href="${href}" class="accordion-link" data-pidx="${pIdx}" data-name="${b.name}">${b.name}</a>`;
+                    const href = './building.html?name=' + encodeURIComponent(b.name) + '&province=' + encodeURIComponent(province.name) + (isTypeMode ? '&type=' + encodeURIComponent(this.currentType.name) : '');
+                    return '<a href="' + href + '" target="_self" class="accordion-link" data-pidx="' + pIdx + '" data-name="' + b.name + '">' + b.name + '</a>';
                 }).join('');
 
                 const headerHref = isTypeMode
-                    ? `./profile.html?province=${encodeURIComponent(province.name)}&type=${encodeURIComponent(this.currentType.name)}`
-                    : `./profile.html?province=${encodeURIComponent(province.name)}`;
+                    ? './profile.html?province=' + encodeURIComponent(province.name) + '&type=' + encodeURIComponent(this.currentType.name)
+                    : './profile.html?province=' + encodeURIComponent(province.name);
 
-                return `
-                    <div class="accordion-item ${isActive}" data-pidx="${pIdx}" data-pname="${province.name}">
-                        <a href="${headerHref}" class="accordion-header" data-pidx="${pIdx}">
-                            <span class="header-text">${province.name}</span>
-                        </a>
-                        <div class="accordion-body">${links}</div>
-                    </div>
-                `;
+                return '<div class="accordion-item ' + isActive + '" data-pidx="' + pIdx + '" data-pname="' + province.name + '">' +
+                    '<a href="' + headerHref + '" target="_self" class="accordion-header" data-pidx="' + pIdx + '">' +
+                    '<span class="header-text">' + province.name + '</span>' +
+                    '</a>' +
+                    '<div class="accordion-body">' + links + '</div>' +
+                    '</div>';
             }).join('');
         };
 
@@ -172,17 +184,13 @@ var App = typeof App !== 'undefined' ? App : {
                     if (i.dataset.pname !== pname) i.classList.remove('active');
                 });
             }
-            container.querySelectorAll(`[data-pname="${pname}"]`).forEach(i => {
+            container.querySelectorAll('[data-pname="' + pname + '"]').forEach(i => {
                 i.classList.toggle('active', willBeActive);
             });
         };
 
-        const turboNavigate = (href) => {
-            if (typeof window.Turbo !== 'undefined' && window.Turbo.visit) {
-                window.Turbo.visit(href);
-            } else {
-                window.location.href = href;
-            }
+        const navigateTo = (href) => {
+            window.location.href = href;
         };
 
         const saveMenuState = () => {
@@ -216,7 +224,7 @@ var App = typeof App !== 'undefined' ? App : {
                     doExpand(pname, willBeActive);
 
                     if (!isCurrent) {
-                        setTimeout(() => turboNavigate(href), 80);
+                        setTimeout(() => navigateTo(href), 80);
                     }
                 });
             });
@@ -227,7 +235,7 @@ var App = typeof App !== 'undefined' ? App : {
         const filter = (keyword) => {
             if (!keyword) {
                 render(allProvinces);
-                const current = container.querySelector(`[data-pname="${currentProvinceName}"]`);
+                const current = container.querySelector('[data-pname="' + currentProvinceName + '"]');
                 if (current) current.classList.add('active');
                 const noResult = container.querySelector('.menu-no-result');
                 if (noResult) noResult.remove();
@@ -236,7 +244,7 @@ var App = typeof App !== 'undefined' ? App : {
             const lowerK = keyword.toLowerCase();
             let hasAnyMatch = false;
             allProvinces.forEach((province, pIdx) => {
-                const item = container.querySelector(`.accordion-item[data-pidx="${pIdx}"]`);
+                const item = container.querySelector('.accordion-item[data-pidx="' + pIdx + '"]');
                 if (!item) return;
                 const headerText = item.querySelector('.header-text');
                 const links = item.querySelectorAll('.accordion-link');
@@ -250,7 +258,7 @@ var App = typeof App !== 'undefined' ? App : {
                         bMatchCount++;
                         const orig = originalTexts.get(link);
                         if (orig) {
-                            const regex = new RegExp(`(${escapeRegex(keyword)})`, 'gi');
+                            const regex = new RegExp('(' + escapeRegex(keyword) + ')', 'gi');
                             link.innerHTML = orig.replace(regex, '<span class="highlight-text">$1</span>');
                         }
                     } else {
@@ -266,7 +274,7 @@ var App = typeof App !== 'undefined' ? App : {
                     if (pMatch) {
                         const orig = originalTexts.get(headerText);
                         if (orig) {
-                            const regex = new RegExp(`(${escapeRegex(keyword)})`, 'gi');
+                            const regex = new RegExp('(' + escapeRegex(keyword) + ')', 'gi');
                             headerText.innerHTML = orig.replace(regex, '<span class="highlight-text">$1</span>');
                         }
                     } else {
@@ -295,7 +303,7 @@ var App = typeof App !== 'undefined' ? App : {
                     if (!state.searchValue) {
                         container.querySelectorAll('.accordion-item').forEach(i => i.classList.remove('active'));
                     }
-                    container.querySelectorAll(`[data-pname="${state.activeProvince}"]`).forEach(i => {
+                    container.querySelectorAll('[data-pname="' + state.activeProvince + '"]').forEach(i => {
                         i.classList.add('active');
                     });
                 }
@@ -456,7 +464,7 @@ var App = typeof App !== 'undefined' ? App : {
             const deltaY = e.touches[0].clientY - startY;
             if (deltaY > 0) {
                 e.preventDefault();
-                mainContent.style.transform = `translateY(${Math.min(deltaY * resistance, maxPull)}px)`;
+                mainContent.style.transform = 'translateY(' + Math.min(deltaY * resistance, maxPull) + 'px)';
             }
         }, { passive: false });
 
@@ -496,17 +504,36 @@ var App = typeof App !== 'undefined' ? App : {
         const mobileToggle = document.getElementById('mobileToggle');
         const sidebar = document.getElementById('sidebar');
         const overlay = document.getElementById('sidebarOverlay');
+
         if (mobileToggle && sidebar) {
-            mobileToggle.addEventListener('click', () => {
-                sidebar.classList.toggle('open');
-                mobileToggle.classList.toggle('hidden');
-            });
+            const toggleMenu = (e) => {
+                if (e) { e.preventDefault(); e.stopPropagation(); }
+                const isOpen = sidebar.classList.toggle('open');
+                mobileToggle.classList.toggle('hidden', isOpen);
+                if (overlay) overlay.classList.toggle('active', isOpen);
+            };
+
+            mobileToggle.addEventListener('click', toggleMenu);
+            mobileToggle.addEventListener('touchend', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                toggleMenu();
+            }, { passive: false });
         }
+
         if (overlay && sidebar && mobileToggle) {
-            overlay.addEventListener('click', () => {
+            const closeMenu = (e) => {
+                if (e) { e.preventDefault(); e.stopPropagation(); }
                 sidebar.classList.remove('open');
                 mobileToggle.classList.remove('hidden');
-            });
+                overlay.classList.remove('active');
+            };
+            overlay.addEventListener('click', closeMenu);
+            overlay.addEventListener('touchend', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                closeMenu();
+            }, { passive: false });
         }
     },
 
@@ -625,7 +652,7 @@ var MapController = typeof MapController !== 'undefined' ? MapController : {
 
     updateTransform() {
         if (!this.mapObj) return;
-        this.mapObj.style.transform = `translate(${this.translateX}px, ${this.translateY}px) scale(${this.scale})`;
+        this.mapObj.style.transform = 'translate(' + this.translateX + 'px, ' + this.translateY + 'px) scale(' + this.scale + ')';
     },
     zoomIn() { this.scale = Math.min(this.scale * 1.3, 4); this.updateTransform(); },
     zoomOut() { this.scale = Math.max(this.scale * 0.7, 0.5); this.updateTransform(); },
@@ -637,6 +664,5 @@ if (!__profileInitAttached) {
     __profileInitAttached = true;
     const init = () => { setTimeout(() => App.init(), 100); };
     document.addEventListener('DOMContentLoaded', init);
-    document.addEventListener('turbo:load', init);
     window.addEventListener('beforeunload', () => { App.destroy(); });
 }

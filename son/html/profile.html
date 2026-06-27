@@ -2,18 +2,17 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <script type="module" src="https://unpkg.com/@hotwired/turbo@8.0.4/dist/turbo.es2017-esm.js"></script>
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>省份大厅</title>
     <script src="https://cdn.jsdelivr.net/npm/echarts@6.0.0/dist/echarts.min.js"></script>
     <link rel="stylesheet" href="../css/profile.css">
+<base target="_blank">
 </head>
 <body>
 
     <button class="mobile-toggle" id="mobileToggle">▶</button>
-    <div class="sidebar-overlay" id="sidebarOverlay"></div>
 
-    <aside class="sidebar" id="sidebar" data-turbo-permanent>
+    <aside class="sidebar" id="sidebar">
         <div class="sidebar-header">
             <div class="menu-search-box">
                 <input type="text" id="menuSearch" placeholder="搜索省份或建筑..." autocomplete="off">
@@ -25,6 +24,8 @@
         </div>
         <div class="menu-accordion" id="menuAccordion"></div>
     </aside>
+
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
 
     <main class="main-content" id="mainContent">
         <div class="particle-layer" id="particleLayer"></div>
@@ -83,24 +84,24 @@
                     <div id="mapWrapper">
                         <object id="provinceMap" data="" type="image/svg+xml" style="width:100%; height:100%; display:block; border:none;"></object>
                     </div>
-                    
+
                     <div id="mapLoading">
                         <div style="text-align:center;">
                             <div style="font-size:40px; margin-bottom:10px;">◈</div>
                             <div>加载地图中...</div>
                         </div>
                     </div>
-                    
+
                     <div class="map-controls">
                         <button onclick="MapController.zoomIn()" class="map-btn" title="放大">+</button>
                         <button onclick="MapController.zoomOut()" class="map-btn" title="缩小">−</button>
                         <button onclick="MapController.reset()" class="map-btn" title="重置">⌂</button>
                     </div>
-                    
+
                     <div class="map-credit-fixed" id="mapCredit">
                         审图号：GS(2024)XXXX号 | 自然资源部监制
                     </div>
-                    
+
                     <div class="map-hint">
                         拖拽移动 · 滚轮缩放
                     </div>
@@ -109,7 +110,6 @@
         </div>
     </main>
 
-    <!-- 【关键】必须先加载数据文件，再加载逻辑文件 -->
     <script src="../json/profile-data.js"></script>
     <script src="../js/profile.js"></script>
 </body>
