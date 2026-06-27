@@ -128,6 +128,7 @@ var PROFILE_DB = typeof PROFILE_DB !== 'undefined' ? PROFILE_DB : {
             "buildings": [
                 { "name": "渤海国上京龙泉府遗址", "period": "唐代" },
                 { "name": "黑龙江将军府", "period": "清代" },
+                { "name": "望江楼", "period": "清代" },
                 { "name": "金上京会宁府遗址", "period": "金朝" }
             ],
             "charts": {
@@ -179,6 +180,7 @@ var PROFILE_DB = typeof PROFILE_DB !== 'undefined' ? PROFILE_DB : {
             "mapCredit": "审图号：GS(2017)1267号 | 国家测绘地理信息监制",
             "buildings": [
                 { "name": "乌拉街清代建筑群", "period": "清代" },
+                { "name": "辉发城址", "period": "明代" },
                 { "name": "高句丽遗址", "period": "公元3-427年" },
                 { "name": "叶赫部城址", "period": "明代" }
             ],
@@ -205,6 +207,7 @@ var PROFILE_DB = typeof PROFILE_DB !== 'undefined' ? PROFILE_DB : {
             "buildings": [
                 { "name": "沈阳故宫", "period": "清代" },
                 { "name": "兴城古城", "period": "明代" },
+                { "name": "朝阳北塔", "period": "北魏" },
                 { "name": "东京城", "period": "后金" }
             ],
             "charts": {
@@ -229,6 +232,8 @@ var PROFILE_DB = typeof PROFILE_DB !== 'undefined' ? PROFILE_DB : {
             "mapCredit": "审图号：GS(2019)3333号 | 自然资源部监制",
             "buildings": [
                 { "name": "天津府城", "period": "清代" },
+                { "name": "天后宫", "period": "明代" },
+                { "name": "大沽口炮台", "period": "清代" },
                 { "name": "天津鼓楼", "period": "明代" }
             ],
             "charts": {
@@ -307,6 +312,7 @@ var PROFILE_DB = typeof PROFILE_DB !== 'undefined' ? PROFILE_DB : {
             "buildings": [
                 { "name": "绥远城墙和将军衙署", "period": "清代" },
                 { "name": "和硕恪靖公主府", "period": "清代" },
+                { "name": "奈曼王府", "period": "清代" },
                 { "name": "元上都遗址", "period": "元代" }
             ],
             "charts": {
@@ -437,6 +443,7 @@ var PROFILE_DB = typeof PROFILE_DB !== 'undefined' ? PROFILE_DB : {
             "buildings": [
                 { "name": "银川玉皇阁", "period": "明代" },
                 { "name": "银川鼓楼", "period": "明代" },
+                { "name": "一百零八塔", "period": "西夏" },
                 { "name": "西夏陵", "period": "西夏" }
             ],
             "charts": {
@@ -462,6 +469,7 @@ var PROFILE_DB = typeof PROFILE_DB !== 'undefined' ? PROFILE_DB : {
             "buildings": [
                 { "name": "伏俟城遗址", "period": "南北朝" },
                 { "name": "热水墓群", "period": "唐代" },
+                { "name": "郭麻日古寨", "period": "公元7世纪" },
                 { "name": "门源古城", "period": "宋代" }
             ],
             "charts": {
@@ -512,6 +520,8 @@ var PROFILE_DB = typeof PROFILE_DB !== 'undefined' ? PROFILE_DB : {
             "mapCredit": "审图号：GS(2019)3333号 | 自然资源部监制",
             "buildings": [
                 { "name": "江孜古堡", "period": "元代" },
+                { "name": "罗布林卡", "period": "清代" },
+                { "name": "古阁王朝", "period": "公元10世纪至17世纪" },
                 { "name": "八廓街", "period": "唐代" }
             ],
             "charts": {
@@ -562,6 +572,7 @@ var PROFILE_DB = typeof PROFILE_DB !== 'undefined' ? PROFILE_DB : {
             "buildings": [
                 { "name": "白帝城", "period": "汉代" },
                 { "name": "龚滩古镇", "period": "唐代" },
+                { "name": "大足石刻", "period": "唐至清代" },
                 { "name": "石宝寨", "period": "明代" }
             ],
             "charts": {
@@ -640,6 +651,7 @@ var PROFILE_DB = typeof PROFILE_DB !== 'undefined' ? PROFILE_DB : {
             "buildings": [
                 { "name": "滕王阁", "period": "唐代" },
                 { "name": "浔阳楼", "period": "唐代" },
+                { "name": "棠阴古镇", "period": "宋代" },
                 { "name": "流坑古村", "period": "五代" }
             ],
             "charts": {
